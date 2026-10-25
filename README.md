@@ -4,6 +4,8 @@
 
 **把代码写进长期记忆。**
 
+**[在线体验 →](https://ryan-zhu111.github.io/CodeRecall/)** · 无需安装，打开即可开始刷题。
+
 面向 AI 算法岗的 ACM 刷题记忆工具，涵盖力扣 Hot 100 和 15 道常见多模态大模型手撕题。通过完整默写与 FSRS 自动复习，减少“看懂了，下次却写不出”的情况。欢迎一起扩展题库。
 
 ## 快速开始
@@ -17,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-打开终端显示的地址，默认是 **http://localhost:5173/**。也可以用 `npm install` 安装依赖。
+打开终端显示的地址，默认是 [http://localhost:5173/](http://localhost:5173/)。也可以用 `npm install` 安装依赖。
 
 无需账号、API Key、数据库或本地 Python。首次运行代码时，浏览器会从 jsDelivr 下载 Pyodide，需要能访问该 CDN。
 
@@ -56,7 +58,7 @@ npm run build
 npm run preview
 ```
 
-本地构建预览默认位于 **http://localhost:4173/**。把生成的 `dist/` 目录部署到静态网站托管服务即可，无需后端。
+本地构建预览默认位于 [http://localhost:4173/](http://localhost:4173/)。把生成的 `dist/` 目录部署到静态网站托管服务即可，无需后端。
 
 ### GitHub Pages
 
