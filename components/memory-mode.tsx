@@ -507,7 +507,7 @@ export function MemoryMode({
                 title="仅本轮跳过，暂存草稿，不新增评分"
               >
                 <SkipForward className="size-4" />
-                跳过本轮
+                跳过本题
               </Button>
             )}
             {active && (
