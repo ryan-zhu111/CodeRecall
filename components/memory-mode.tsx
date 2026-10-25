@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AppearanceControls } from '@/components/appearance-settings';
+import { ResetLearningDialog } from '@/components/reset-learning-dialog';
+import { learningGeneration, isCurrentLearning } from '@/lib/learning-storage';
 import {
   MEMORY_KEY,
   Rating,
@@ -126,9 +128,11 @@ function StatementText({ text }: { text: string }) {
 export function MemoryMode({
   payload,
   onExit,
+  onReset,
 }: {
   payload: { problems: MemoryProblem[]; prelude: string };
   onExit: () => void;
+  onReset: () => string | null;
 }) {
   const problems = payload.problems;
   const [studyTrack, setStudyTrack] = useState<
@@ -158,6 +162,7 @@ export function MemoryMode({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importRef = useRef<HTMLInputElement | null>(null);
   const mountedRef = useRef(true);
+  const generationRef = useRef<string | null>(null);
   const attempt = store.session?.attempt;
   const problem = problems.find((p) => p.id === attempt?.problemId);
   const due = dueIds(store, studyProblems, now);
@@ -183,6 +188,13 @@ export function MemoryMode({
   function commit(change: (current: MemoryStore) => MemoryStore) {
     if (!storeRef.current) return false;
     try {
+      if (
+        generationRef.current === null ||
+        !isCurrentLearning(localStorage, generationRef.current)
+      ) {
+        stopRun();
+        return false;
+      }
       const raw = localStorage.getItem(MEMORY_KEY);
       const latest = raw
         ? parseMemory(raw, new Set(problems.map((p) => p.id)))
@@ -214,6 +226,7 @@ export function MemoryMode({
   useEffect(() => {
     mountedRef.current = true;
     try {
+      generationRef.current = learningGeneration(localStorage);
       const raw = localStorage.getItem(MEMORY_KEY);
       const saved = raw
         ? parseMemory(raw, new Set(problems.map((p) => p.id)))
@@ -325,7 +338,9 @@ export function MemoryMode({
     const id = ++runRef.current,
       attemptId = attempt.id,
       code = attempt.code;
-    const worker = workerRef.current ?? new Worker(`${import.meta.env.BASE_URL}python-worker.js`);
+    const worker =
+      workerRef.current ??
+      new Worker(`${import.meta.env.BASE_URL}python-worker.js`);
     workerRef.current = worker;
     runningRef.current = true;
     setResult({
@@ -419,18 +434,21 @@ export function MemoryMode({
   }
   async function importProgress(file: File) {
     try {
+      const generation = learningGeneration(localStorage);
       if (file.size > 20_000_000) throw Error('文件过大');
       const saved = parseMemory(
         await file.text(),
         new Set(problems.map((p) => p.id)),
       );
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !isCurrentLearning(localStorage, generation))
+        return;
       if (
         !window.confirm(
           `导入 ${Object.keys(saved.cards).length} 道题、${saved.reviews.length} 次复习记录？这会替换当前学习记录，建议先导出。`,
         )
       )
         return;
+      if (!isCurrentLearning(localStorage, generation)) return;
       stopRun();
       saved.revision = crypto.randomUUID();
       localStorage.setItem(MEMORY_KEY, JSON.stringify(saved));
@@ -852,7 +870,7 @@ export function MemoryMode({
               </p>
               <p className="mt-1">{dayKey(now)} · 北京时间</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={exportProgress}>
                 <Download className="size-3.5" />
                 导出学习记录
@@ -865,6 +883,13 @@ export function MemoryMode({
                 <Upload className="size-3.5" />
                 导入
               </Button>
+              <ResetLearningDialog
+                onExport={exportProgress}
+                onReset={() => {
+                  stopRun();
+                  return onReset();
+                }}
+              />
             </div>
           </footer>
         </div>
@@ -1025,7 +1050,7 @@ export function MemoryMode({
                   </div>
                 )}
                 <p className="text-xs leading-6 text-muted-foreground">
-                  返回题库只暂停本轮，不记为提示；仅在记忆模式点击“查看核心思路”或“查看参考答案”时记录重学。已有提示记录不会因重置而清除。
+                  返回题库只暂停本轮，不记为提示；仅在记忆模式点击“查看核心思路”或“查看参考答案”时记录重学。已有提示记录不会因重置代码而清除。
                 </p>
               </div>
             </article>

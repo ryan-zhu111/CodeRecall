@@ -51,6 +51,15 @@ import {
 import { MemoryMode } from '@/components/memory-mode';
 import { AppearanceControls } from '@/components/appearance-settings';
 import { BrandMark } from '@/components/brand-mark';
+import {
+  SOLVED_KEY,
+  DRAFTS_KEY,
+  VERSIONED_DRAFTS_KEY,
+  LEARNING_RESET_KEY,
+  learningGeneration,
+  isCurrentLearning,
+  resetLearningProgress,
+} from '@/lib/learning-storage';
 
 const PythonEditor = lazy(() =>
   import('@/components/python-editor').then((m) => ({
@@ -118,9 +127,6 @@ type ConsoleState = {
   duration?: number;
 };
 
-const SOLVED_KEY = 'acm-quick-drill:solved';
-const DRAFTS_KEY = 'acm-quick-drill:drafts';
-const VERSIONED_DRAFTS_KEY = 'acm-quick-drill:drafts-by-version';
 const EMPTY_PROBLEMS: Problem[] = [];
 function problemLabel(problem: Problem) {
   return problem.track === 'multimodal'
@@ -206,8 +212,52 @@ export default function Home() {
   const runIdRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedAtRef = useRef(0);
+  const generationRef = useRef<string | null>(null);
+  const reloadingRef = useRef(false);
+  const reloadAfterReset = useCallback(() => {
+    if (reloadingRef.current) return;
+    reloadingRef.current = true;
+    runIdRef.current++;
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    // Remount both learning views, discard pending work and return to the dashboard.
+    window.location.reload();
+  }, []);
+  const learningIsCurrent = useCallback(() => {
+    if (reloadingRef.current || generationRef.current === null) return false;
+    if (!isCurrentLearning(localStorage, generationRef.current)) {
+      reloadAfterReset();
+      return false;
+    }
+    return true;
+  }, [reloadAfterReset]);
+
+  function resetLearning() {
+    try {
+      resetLearningProgress(localStorage);
+      reloadAfterReset();
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : '重置失败，请稍后重试。';
+    }
+  }
 
   useEffect(() => {
+    try {
+      generationRef.current = learningGeneration(localStorage);
+    } catch {
+      /* Storage unavailable. */
+    }
+    const syncReset = (event: StorageEvent) => {
+      if (
+        event.storageArea === localStorage &&
+        event.key === LEARNING_RESET_KEY &&
+        event.newValue !== generationRef.current
+      )
+        reloadAfterReset();
+    };
+    window.addEventListener('storage', syncReset);
     queueMicrotask(() => {
       const stored = safeRead<Array<string | number>>(SOLVED_KEY, []);
       setSolved(
@@ -244,20 +294,21 @@ export default function Home() {
       );
 
     return () => {
+      window.removeEventListener('storage', syncReset);
       workerRef.current?.terminate();
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
 
   useEffect(() => {
-    if (!storageReady) return;
+    if (!storageReady || !learningIsCurrent()) return;
     window.localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
-  }, [solved, storageReady]);
+  }, [solved, storageReady, learningIsCurrent]);
 
   useEffect(() => {
-    if (!storageReady) return;
+    if (!storageReady || !learningIsCurrent()) return;
     window.localStorage.setItem(VERSIONED_DRAFTS_KEY, JSON.stringify(drafts));
-  }, [drafts, storageReady]);
+  }, [drafts, storageReady, learningIsCurrent]);
 
   const problems = payload?.problems ?? EMPTY_PROBLEMS;
   const leetcodeCount = problems.filter(
@@ -342,7 +393,7 @@ export default function Home() {
   );
 
   const updateCode = (value: string) => {
-    if (!selected) return;
+    if (!selected || !learningIsCurrent()) return;
     if (consoleState.status === 'running') {
       cancelRun();
       setConsoleState({
@@ -358,7 +409,7 @@ export default function Home() {
   };
 
   const loadEditor = (kind: EditorDraft['kind']) => {
-    if (!selected || kind === 'draft') return;
+    if (!selected || kind === 'draft' || !learningIsCurrent()) return;
     cancelRun();
     setConsoleState({
       status: 'idle',
@@ -370,14 +421,16 @@ export default function Home() {
 
   const ensureWorker = useCallback(() => {
     if (!workerRef.current) {
-      workerRef.current = new Worker(`${import.meta.env.BASE_URL}python-worker.js`);
+      workerRef.current = new Worker(
+        `${import.meta.env.BASE_URL}python-worker.js`,
+      );
     }
     return workerRef.current;
   }, []);
 
   const runCode = useCallback(
     (judgeSample: boolean) => {
-      if (!selected || !payload) return;
+      if (!selected || !payload || !learningIsCurrent()) return;
       const structureMode = selected.judgeMode === 'structure';
       const runId = ++runIdRef.current;
       const worker = ensureWorker();
@@ -398,6 +451,7 @@ export default function Home() {
       });
 
       worker.onmessage = (event: MessageEvent<WorkerResult>) => {
+        if (!learningIsCurrent()) return;
         if (event.data.id !== runId || runIdRef.current !== runId) return;
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -477,7 +531,7 @@ export default function Home() {
         });
       }, 20_000);
     },
-    [code, customInput, ensureWorker, payload, selected],
+    [code, customInput, ensureWorker, payload, selected, learningIsCurrent],
   );
 
   const move = (offset: number) => {
@@ -525,7 +579,13 @@ export default function Home() {
   }
 
   if (memoryMode)
-    return <MemoryMode payload={payload} onExit={() => setMemoryMode(false)} />;
+    return (
+      <MemoryMode
+        payload={payload}
+        onExit={() => setMemoryMode(false)}
+        onReset={resetLearning}
+      />
+    );
 
   return (
     <main className="study-workspace min-h-screen text-foreground">

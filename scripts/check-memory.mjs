@@ -13,11 +13,18 @@ const transpile = (path) =>
       module: ts.ModuleKind.ESNext,
     },
   }).outputText;
-const m = await import(
+const memoryModule = encode(
+  transpile('lib/memory.ts').replace(
+    "'ts-fsrs'",
+    JSON.stringify(import.meta.resolve('ts-fsrs')),
+  ),
+);
+const m = await import(memoryModule);
+const learning = await import(
   encode(
-    transpile('lib/memory.ts').replace(
-      "'ts-fsrs'",
-      JSON.stringify(import.meta.resolve('ts-fsrs')),
+    transpile('lib/learning-storage.ts').replace(
+      "'./memory'",
+      JSON.stringify(memoryModule),
     ),
   )
 );
@@ -256,6 +263,195 @@ assert.equal(
   algorithm,
   'algorithm tasks cannot bypass test suite with a structure pass',
 );
+
+// Exercise factory reset against real FSRS data and legacy editor formats.
+let practiced = m.startSession(m.emptyMemory(), [p, multimodal[0]], 0, 2, now);
+practiced = m.revealHint(practiced, 'approach', now);
+practiced = m.finishAttempt(practiced, m.Rating.Again, [p, multimodal[0]], now);
+practiced = m.revealHint(practiced, 'answer', now);
+practiced = m.editAttempt(practiced, '# unfinished multimodal solution');
+practiced.revision = 'before-reset';
+const appearanceKey = 'acm-quick-drill:appearance-v1';
+const originalEntries = [
+  [m.MEMORY_KEY, JSON.stringify(practiced)],
+  [learning.SOLVED_KEY, JSON.stringify([1, p.id, multimodal[0].id])],
+  [
+    learning.DRAFTS_KEY,
+    JSON.stringify({ 1: 'legacy numbered draft', [p.id]: 'legacy draft' }),
+  ],
+  [
+    learning.VERSIONED_DRAFTS_KEY,
+    JSON.stringify({
+      [`original:${p.id}`]: { kind: 'draft', code: 'old edition draft' },
+      [editor.draftKey(p.id)]: { kind: 'draft', code: 'current draft' },
+    }),
+  ],
+  [learning.LEARNING_RESET_KEY, 'previous-generation'],
+  [appearanceKey, JSON.stringify({ theme: 'dark', fontSize: 21 })],
+  ['another-app:important', 'keep me'],
+];
+function mockStorage(entries, failAt = 0) {
+  const values = new Map(entries);
+  let writes = 0;
+  const beforeWrite = () => {
+    writes++;
+    if (writes === failAt) throw new Error('simulated storage failure');
+  };
+  return {
+    values,
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      beforeWrite();
+      values.set(key, value);
+    },
+    removeItem: (key) => {
+      beforeWrite();
+      values.delete(key);
+    },
+  };
+}
+const resetStorage = mockStorage(originalEntries);
+const oldGeneration = learning.learningGeneration(resetStorage);
+assert.equal(learning.isCurrentLearning(resetStorage, oldGeneration), true);
+learning.resetLearningProgress(resetStorage);
+const resetMemory = m.parseMemory(
+  resetStorage.getItem(m.MEMORY_KEY),
+  new Set(data.problems.map((p) => p.id)),
+);
+assert.deepEqual(
+  resetMemory.cards,
+  {},
+  'all algorithm and multimodal cards are reset',
+);
+assert.deepEqual(resetMemory.reviews, [], 'review history is reset');
+assert.equal(resetMemory.session, null, 'unfinished round and code are reset');
+assert.ok(resetMemory.revision && resetMemory.revision !== practiced.revision);
+assert.equal(learning.learningGeneration(resetStorage), resetMemory.revision);
+assert.equal(
+  learning.isCurrentLearning(resetStorage, oldGeneration),
+  false,
+  'stale tabs and pending imports are rejected',
+);
+assert.equal(
+  learning.isCurrentLearning(resetStorage, resetMemory.revision),
+  true,
+);
+for (const key of [
+  learning.SOLVED_KEY,
+  learning.DRAFTS_KEY,
+  learning.VERSIONED_DRAFTS_KEY,
+])
+  assert.equal(
+    resetStorage.getItem(key),
+    null,
+    `${key} must not survive reset`,
+  );
+for (const key of [appearanceKey, 'another-app:important'])
+  assert.equal(
+    resetStorage.getItem(key),
+    new Map(originalEntries).get(key),
+    `${key} is preserved`,
+  );
+const migratedAfterReset = editor.migrateDrafts(
+  data.problems,
+  JSON.parse(resetStorage.getItem(learning.DRAFTS_KEY) ?? '{}'),
+  JSON.parse(resetStorage.getItem(learning.VERSIONED_DRAFTS_KEY) ?? '{}'),
+);
+assert.deepEqual(
+  migratedAfterReset,
+  {},
+  'refresh cannot resurrect historical drafts',
+);
+assert.equal(
+  editor.getEditorCode(p, migratedAfterReset[editor.draftKey(p.id)]),
+  p.starterCode,
+);
+assert.deepEqual(
+  m.dueIds(resetMemory, data.problems, now),
+  [],
+  'nothing is due after reset',
+);
+const newRound = m.startSession(
+  resetMemory,
+  data.problems,
+  0,
+  data.problems.length,
+  now,
+);
+assert.equal(
+  newRound.session.queue.length,
+  115,
+  'all questions become new again',
+);
+assert.equal(newRound.session.attempt.code, data.problems[0].starterCode);
+learning.resetLearningProgress(resetStorage);
+assert.notEqual(
+  learning.learningGeneration(resetStorage),
+  resetMemory.revision,
+  'repeated reset invalidates the preceding generation too',
+);
+
+// Inject a one-off failure at every mutation, including the final generation
+// write, to ensure original data is restored rather than partly cleared.
+for (let failAt = 1; failAt <= 5; failAt++) {
+  const failingStorage = mockStorage(originalEntries, failAt);
+  assert.throws(
+    () => learning.resetLearningProgress(failingStorage),
+    /原记录已保留/,
+  );
+  assert.deepEqual(
+    failingStorage.values,
+    new Map(originalEntries),
+    `reset rollback at write ${failAt}`,
+  );
+  assert.equal(learning.isCurrentLearning(failingStorage, oldGeneration), true);
+}
+const newUserEntries = [[appearanceKey, 'existing preferences']];
+const failedNewUser = mockStorage(newUserEntries, 5);
+assert.throws(
+  () => learning.resetLearningProgress(failedNewUser),
+  /原记录已保留/,
+);
+assert.deepEqual(
+  failedNewUser.values,
+  new Map(newUserEntries),
+  'rollback removes newly created values when no previous records existed',
+);
+const unreadableStorage = mockStorage(originalEntries);
+unreadableStorage.getItem = () => {
+  throw new Error('storage read blocked');
+};
+assert.throws(
+  () => learning.resetLearningProgress(unreadableStorage),
+  /storage read blocked/,
+);
+assert.deepEqual(
+  unreadableStorage.values,
+  new Map(originalEntries),
+  'snapshot failure does not change any data',
+);
+const corruptStorage = mockStorage([[m.MEMORY_KEY, '{invalid JSON']]);
+learning.resetLearningProgress(corruptStorage);
+assert.equal(
+  m.parseMemory(corruptStorage.getItem(m.MEMORY_KEY), ids).session,
+  null,
+  'reset also recovers from corrupt learning data',
+);
+const failedRollback = mockStorage(originalEntries);
+const storeValue = failedRollback.setItem;
+failedRollback.setItem = (key, value) => {
+  if (
+    key === learning.LEARNING_RESET_KEY ||
+    value === new Map(originalEntries).get(m.MEMORY_KEY)
+  )
+    throw new Error('persistent storage failure');
+  storeValue(key, value);
+};
+assert.throws(
+  () => learning.resetLearningProgress(failedRollback),
+  /重置未完整完成/,
+  'rollback failure is explicit rather than reported as success',
+);
 console.log(
-  'PASS: FSRS scheduling, hint enforcement, full-test gating, 15 multimodal cards and structure grading, stale result rejection, daily queue, refresh, overdue reviews, draft migration and answer removal.',
+  'PASS: FSRS scheduling, hint enforcement, full-test gating, 15 multimodal cards and structure grading, stale result rejection, daily queue, refresh, overdue reviews, draft migration, answer removal, factory reset, generation invalidation and storage rollback.',
 );
