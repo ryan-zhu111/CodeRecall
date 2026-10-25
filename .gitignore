@@ -1,0 +1,26 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Personal exports, generated captures, and private hosting configuration
+coderecall-memory-*.json
+acm-quick-drill-memory-*.json
+outputs/
+work/
+.openai/
+.wrangler/
+.next/
+.vinext/
+*.pem
+*.key

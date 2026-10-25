@@ -1,0 +1,3319 @@
+{
+  "version": 7,
+  "title": "CodeRecall · 码上记",
+  "prelude": "class Node:\n    def __init__(self,v=0,n=None): self.val=v; self.next=n\n\ndef build_list(a):\n    d=Node(); p=d\n    for x in a: p.next=Node(x); p=p.next\n    return d.next\n\ndef print_list(h):\n    a=[]\n    while h: a.append(h.val); h=h.next\n    print(*a)\n\ndef chain(a,tail=None):\n    if not a:return tail\n    h=build_list(a); p=h\n    while p.next:p=p.next\n    p.next=tail; return h\n\ndef build_cycle(a,pos):\n    h=build_list(a)\n    if pos<0:return h\n    p=h; ent=None; i=0\n    while p.next:\n        if i==pos:ent=p\n        p=p.next; i+=1\n    if i==pos:ent=p\n    p.next=ent; return h\n\nfrom collections import deque\nclass T:\n    def __init__(self,v=0): self.val=v; self.left=self.right=None\n\ndef build_tree(v):\n    if not v or v[0]=='null':return None\n    r=T(int(v[0])); q=deque([r]); i=1\n    while q and i<len(v):\n        x=q.popleft()\n        if i<len(v) and v[i]!='null':x.left=T(int(v[i]));q.append(x.left)\n        i+=1\n        if i<len(v) and v[i]!='null':x.right=T(int(v[i]));q.append(x.right)\n        i+=1\n    return r\n\ndef find(r,v):\n    if not r:return None\n    if r.val==v:return r\n    return find(r.left,v) or find(r.right,v)\n\ndef serialize(r):\n    if not r:return []\n    q=deque([r]);a=[]\n    while q:\n        x=q.popleft()\n        if x:a.append(str(x.val));q.extend((x.left,x.right))\n        else:a.append('null')\n    while a and a[-1]=='null':a.pop()\n    return a",
+  "collections": [
+    {
+      "id": "leetcode",
+      "label": "LeetCode Hot 100",
+      "count": 100
+    },
+    {
+      "id": "multimodal",
+      "label": "多模态手撕",
+      "count": 15
+    }
+  ],
+  "problems": [
+    {
+      "id": "lc-1",
+      "sequence": 1,
+      "lc": 1,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "两数之和",
+      "category": "哈希表",
+      "tags": [
+        "哈希表"
+      ],
+      "statement": [
+        "给定整数数组 `nums` 和目标值 `target`，找出两个不同位置的元素，使它们的和等于 `target`。",
+        "第一行输入 `n target`，第二行输入 `n` 个整数。题目保证恰好存在一个有效答案，同一个元素不能使用两次。",
+        "输出两个元素的零基下标 `i j`，并保证 `i < j`。"
+      ],
+      "approach": "遍历 nums 时先用 seen 查找 target - x 的下标，找到就输出这对下标，否则记录当前数值和下标。",
+      "inputContract": "n target；下一行 n 个整数",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n    seen = {}  # seen：已出现的数值 → 下标\n    for i, x in enumerate(nums):  # i：当前下标；x：当前元素\n        if target - x in seen:\n            print(seen[target - x], i)\n            return\n        seen[x] = i\n\nmain()",
+      "starterCode": "# LC1 · 两数之和\n# 输入：n target；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 9\n2 7 11 15\n",
+      "expectedOutput": "0 1",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC1 · 两数之和\n# 输入：n target；下一行 n 个整数\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-49",
+      "sequence": 2,
+      "lc": 49,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "字母异位词分组",
+      "category": "哈希表",
+      "tags": [
+        "哈希表",
+        "哈希",
+        "key设计"
+      ],
+      "statement": [
+        "给定 `n` 个字符串，将互为字母异位词的字符串分到同一组。字母异位词包含相同字符及相同出现次数，只是排列顺序可能不同。",
+        "第一行输入整数 `n`，随后 `n` 行各输入一个字符串。",
+        "每组输出一行，组内字符串以空格分隔并保持它们在输入中的先后顺序；各组之间的输出顺序不限。"
+      ],
+      "approach": "将每个单词排序后的字符串作为 groups 的键，把键相同的单词放在一组输出。",
+      "inputContract": "n；接下来 n 行字符串",
+      "complexity": "O(ΣLlogL) / O(ΣL)",
+      "referenceCode": "from collections import defaultdict\n\ndef main():\n    n = int(input())  # n：字符串个数\n    groups = defaultdict(list)  # groups：排序后的字符串 → 同组单词列表\n    for _ in range(n):\n        s = input().strip()  # s：当前输入的单词\n        groups[''.join(sorted(s))].append(s)\n    for group in groups.values():  # group：一组字母异位词\n        print(*group)\n\nmain()",
+      "starterCode": "# LC49 · 字母异位词分组\n# 输入：n；接下来 n 行字符串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3\neat\ntea\nbat\n",
+      "expectedOutput": "eat tea\nbat",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC49 · 字母异位词分组\n# 输入：n；接下来 n 行字符串\n\ndef main():\n    n = int(input())  # n：单词个数\n    words = [input().strip() for _ in range(n)]  # words：所有输入单词\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-128",
+      "sequence": 3,
+      "lc": 128,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最长连续序列",
+      "category": "哈希表",
+      "tags": [
+        "哈希表",
+        "哈希集合"
+      ],
+      "statement": [
+        "给定一个未排序整数数组 `nums`，求其中最长连续整数序列的长度。连续序列中的数值依次相差 `1`，不要求它们在原数组中相邻。",
+        "第一行输入整数 `n`，第二行输入 `n` 个整数；重复元素只按同一个数值计算。",
+        "输出最长连续序列的长度。"
+      ],
+      "approach": "用 seen 集合去重，只从前一个数不存在的 x 开始连续向后查找，并用 ans 记录最长长度。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    seen, ans = set(nums), 0  # seen：全部数值的集合；ans：最长连续长度\n    for x in seen:  # x：尝试作为连续段起点的数\n        if x - 1 not in seen:\n            y = x  # y：向右查找的数，结束时为首个缺失值\n            while y in seen:\n                y += 1\n            ans = max(ans, y - x)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC128 · 最长连续序列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6\n100 4 200 1 3 2\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC128 · 最长连续序列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-283",
+      "lc": 283,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "移动零",
+      "category": "双指针",
+      "tags": [
+        "双指针"
+      ],
+      "statement": [
+        "将数组中的零移到末尾，其他元素保持原有的先后顺序，要求直接修改数组。",
+        "第一行输入 `n`，第二行输入 `n` 个整数，输出移动后的数组。"
+      ],
+      "approach": "用 left 指向下一个非零数的位置，遍历 nums 时把非零数交换到 left，再将 left 向右移。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    left = 0  # left：下一个非零数应放的位置\n    for right, x in enumerate(nums):  # right：当前下标；x：当前元素\n        if x:\n            nums[left], nums[right] = nums[right], nums[left]\n            left += 1\n    print(*nums)\n\nmain()",
+      "starterCode": "# LC283 · 移动零\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC283 · 移动零\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "6\n0 4 0 2 0 7\n",
+      "expectedOutput": "4 2 7 0 0 0",
+      "normalizer": "trim",
+      "sequence": 4
+    },
+    {
+      "id": "lc-11",
+      "sequence": 5,
+      "lc": 11,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "盛最多水的容器",
+      "category": "双指针",
+      "tags": [
+        "双指针"
+      ],
+      "statement": [
+        "数组 `height` 中第 `i` 个数表示位于横坐标 `i` 的竖线高度。任选两条竖线，与横轴共同形成一个容器，其容量为两线间距乘以较短竖线的高度。",
+        "第一行输入整数 `n`，第二行输入 `n` 个非负高度。",
+        "输出所有可选容器中的最大容量。"
+      ],
+      "approach": "让 left、right 从两端向内移动，每次用宽度乘较短高度更新 ans，再移动较短的挡板。",
+      "inputContract": "n；下一行 n 个高度",
+      "complexity": "O(n) / O(1)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：各位置的挡板高度\n    left, right, ans = 0, n - 1, 0  # left、right：两侧挡板下标；ans：最大盛水面积\n    while left < right:\n        ans = max(ans, (right - left) * min(nums[left], nums[right]))\n        if nums[left] < nums[right]: left += 1\n        else: right -= 1\n    print(ans)\n\nmain()",
+      "starterCode": "# LC11 · 盛最多水的容器\n# 输入：n；下一行 n 个高度\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "9\n1 8 6 2 5 4 8 3 7\n",
+      "expectedOutput": "49",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC11 · 盛最多水的容器\n# 输入：n；下一行 n 个高度\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-15",
+      "sequence": 6,
+      "lc": 15,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "三数之和",
+      "category": "双指针",
+      "tags": [
+        "双指针",
+        "排序 + 双指针"
+      ],
+      "statement": [
+        "给定整数数组 `nums`，找出所有满足 `nums[i] + nums[j] + nums[k] = 0` 的三元组，其中三个下标必须互不相同。",
+        "第一行输入整数 `n`，第二行输入 `n` 个整数。答案中不能包含数值完全相同的重复三元组。",
+        "每个三元组按非递减顺序输出在一行，三个整数之间用空格分隔；各行顺序不限。没有答案时不输出任何三元组。"
+      ],
+      "approach": "将 nums 排序后固定 i，用 left、right 根据三数之和向内移动，并跳过重复值以输出不重复的零和三元组。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "O(n²) 时间；Python 排序最坏 O(n) 辅助空间，双指针部分 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    nums.sort()\n    for i in range(n - 2):  # i：固定的第一个数的下标\n        if nums[i] > 0: break\n        if i and nums[i] == nums[i - 1]: continue\n        left, right = i + 1, n - 1  # left、right：另外两个数的左右指针\n        while left < right:\n            total = nums[i] + nums[left] + nums[right]  # total：当前三个数之和\n            if total < 0:\n                left += 1\n            elif total > 0:\n                right -= 1\n            else:\n                print(nums[i], nums[left], nums[right])\n                left += 1\n                right -= 1\n                while left < right and nums[left] == nums[left - 1]: left += 1\n                while left < right and nums[right] == nums[right + 1]: right -= 1\n\nmain()",
+      "starterCode": "# LC15 · 三数之和\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6\n-1 0 1 2 -1 -4\n",
+      "expectedOutput": "-1 -1 2\n-1 0 1",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC15 · 三数之和\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-42",
+      "lc": 42,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "接雨水",
+      "category": "双指针",
+      "tags": [
+        "双指针"
+      ],
+      "statement": [
+        "数组给出一排宽度均为 1 的柱子高度，计算降雨后柱子之间能积存的总水量。",
+        "第一行输入 `n`，第二行输入非负高度，输出总水量。"
+      ],
+      "approach": "从两端维护最高挡板 left_max、right_max，每次结算较低挡板一侧的积水并向内移动。",
+      "inputContract": "n；下一行 n 个非负高度",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    left, right = 0, n - 1  # left、right：尚未结算的左右端点\n    left_max = right_max = ans = 0  # left_max、right_max：两侧最高挡板；ans：总积水\n    while left <= right:\n        left_max = max(left_max, nums[left])\n        right_max = max(right_max, nums[right])\n        if left_max <= right_max:\n            ans += left_max - nums[left]\n            left += 1\n        else:\n            ans += right_max - nums[right]\n            right -= 1\n    print(ans)\n\nmain()",
+      "starterCode": "# LC42 · 接雨水\n# 输入：n；下一行 n 个非负高度\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC42 · 接雨水\n# 输入：n；下一行 n 个非负高度\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n3 0 2 0 4\n",
+      "expectedOutput": "7",
+      "normalizer": "trim",
+      "sequence": 7
+    },
+    {
+      "id": "lc-3",
+      "sequence": 8,
+      "lc": 3,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "无重复字符最长子串",
+      "category": "滑动窗口",
+      "tags": [
+        "滑动窗口"
+      ],
+      "statement": [
+        "给定字符串 `s`，求不包含重复字符的最长连续子串长度。子串必须由原字符串中一段连续字符组成。",
+        "输入一行字符串 `s`。",
+        "输出最长无重复字符子串的长度；空字符串的结果为 `0`。"
+      ],
+      "approach": "用 seen 记录字符上次出现的下标，让 left 跳过窗口内的重复字符，并用 ans 记录最长窗口。",
+      "inputContract": "一行字符串 s",
+      "complexity": "O(n) / O(|Σ|)",
+      "referenceCode": "def main():\n    s = input()  # s：输入字符串\n    seen, left, ans = {}, 0, 0  # seen：字符 → 上次下标；left：窗口左端；ans：最长长度\n    for right, ch in enumerate(s):  # right：窗口右端；ch：新加入的字符\n        left = max(left, seen.get(ch, -1) + 1)\n        seen[ch] = right\n        ans = max(ans, right - left + 1)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC3 · 无重复字符最长子串\n# 输入：一行字符串 s\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "abcabcbb\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC3 · 无重复字符最长子串\n# 输入：一行字符串 s\n\ndef main():\n    s = input()  # s：输入字符串，保留空格\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-438",
+      "sequence": 9,
+      "lc": 438,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "找到字符串中所有字母异位词",
+      "category": "滑动窗口",
+      "tags": [
+        "滑动窗口",
+        "固定窗口"
+      ],
+      "statement": [
+        "给定字符串 `s` 和 `p`，找出 `s` 中所有与 `p` 互为字母异位词的连续子串。匹配位置允许重叠。",
+        "第一行输入 `s`，第二行输入 `p`。匹配子串的长度必须与 `p` 相同，并且每种字符的出现次数也相同。",
+        "按从小到大的顺序输出所有匹配子串的零基起始下标，以空格分隔；没有匹配时输出空行。"
+      ],
+      "approach": "用 cnt 记录模式串字符的剩余次数，右端加入字符后若超额就收缩 left，窗口长度等于模式串长度时记录起点。",
+      "inputContract": "第一行 s；第二行 p",
+      "complexity": "O(n+m) 时间 / O(|Σ|) 辅助空间；不计输出。",
+      "referenceCode": "from collections import Counter\n\ndef main():\n    s, p = input().strip(), input().strip()  # s：被搜索字符串；p：目标模式串\n    # cnt：字符剩余可用次数；left：窗口左端；ans：匹配起点列表\n    cnt, left, ans = Counter(p), 0, []\n    for right, ch in enumerate(s):  # right：窗口右端；ch：新加入的字符\n        cnt[ch] -= 1\n        while cnt[ch] < 0:\n            cnt[s[left]] += 1\n            left += 1\n        if right - left + 1 == len(p): ans.append(left)\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC438 · 找到字符串中所有字母异位词\n# 输入：第一行 s；第二行 p\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "cbaebabacd\nabc\n",
+      "expectedOutput": "0 6",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC438 · 找到字符串中所有字母异位词\n# 输入：第一行 s；第二行 p\n\ndef main():\n    s, p = input().strip(), input().strip()  # s：被搜索字符串；p：模式串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-560",
+      "sequence": 10,
+      "lc": 560,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "和为 K 的子数组",
+      "category": "子串",
+      "tags": [
+        "子串",
+        "前缀和 + 哈希"
+      ],
+      "statement": [
+        "给定整数数组 `nums` 和整数 `k`，统计元素和恰好等于 `k` 的非空连续子数组数量。",
+        "第一行输入 `n k`，第二行输入 `n` 个整数。数组元素可以为正数、负数或零。",
+        "输出符合条件的连续子数组总数。"
+      ],
+      "approach": "累加 prefix 后，用 cnt 中 prefix - target 的出现次数增加 ans，再记录当前前缀和的次数。",
+      "inputContract": "n k；下一行 n 个整数",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n    # cnt：前缀和 → 次数；prefix：当前前缀和；ans：目标子数组数\n    cnt, prefix, ans = {0: 1}, 0, 0\n    for x in nums:  # x：当前元素\n        prefix += x\n        ans += cnt.get(prefix - target, 0)\n        cnt[prefix] = cnt.get(prefix, 0) + 1\n    print(ans)\n\nmain()",
+      "starterCode": "# LC560 · 和为 K 的子数组\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 2\n1 1 1\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC560 · 和为 K 的子数组\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-239",
+      "sequence": 11,
+      "lc": 239,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "滑动窗口最大值",
+      "category": "子串",
+      "tags": [
+        "子串",
+        "单调队列"
+      ],
+      "statement": [
+        "给定整数数组 `nums` 和窗口大小 `k`，一个长度为 `k` 的连续窗口从数组最左端逐步移动到最右端。",
+        "按窗口出现的先后顺序，输出每个窗口中的最大值，所有结果在同一行以空格分隔。",
+        "输入首行为 `n k`，第二行为 `n` 个整数，并保证 `1 <= k <= n`。"
+      ],
+      "approach": "用 q 保存值递减的下标，移除队头过期项和队尾不大于新值的项，每个完整窗口的队头就是最大值。",
+      "inputContract": "n k；下一行 n 个整数",
+      "complexity": "O(n) / O(k)",
+      "referenceCode": "from collections import deque\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：窗口长度\n    nums = list(map(int, input().split()))  # nums：输入数组\n    q, ans = deque(), []  # q：值递减的下标队列；ans：各窗口最大值\n    for i, x in enumerate(nums):  # i：当前下标；x：当前元素\n        if q and q[0] <= i - k: q.popleft()\n        while q and nums[q[-1]] <= x: q.pop()\n        q.append(i)\n        if i >= k - 1: ans.append(nums[q[0]])\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC239 · 滑动窗口最大值\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "8 3\n1 3 -1 -3 5 3 6 7\n",
+      "expectedOutput": "3 3 5 5 6 7",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC239 · 滑动窗口最大值\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：滑动窗口长度\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-76",
+      "sequence": 12,
+      "lc": 76,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最小覆盖子串",
+      "category": "子串",
+      "tags": [
+        "子串",
+        "可变滑窗"
+      ],
+      "statement": [
+        "给定字符串 `s` 和 `t`，在 `s` 中寻找包含 `t` 全部字符的最短连续子串。若 `t` 中某个字符出现多次，所选子串也必须包含不少于相同次数的该字符。",
+        "第一行输入 `s`，第二行输入 `t`。",
+        "输出满足条件的最短子串；若不存在则输出空行。若有多个长度相同的最短答案，输出起始位置最靠前的一个。"
+      ],
+      "approach": "用 cnt 和 missing 记录字符缺额，右扩窗口直到覆盖 t 后不断左缩，并用 start、size 保存最短合法子串。",
+      "inputContract": "第一行 s；第二行 t",
+      "complexity": "O(n) / O(|Σ|)",
+      "referenceCode": "from collections import Counter\n\ndef main():\n    s, t = input().strip(), input().strip()  # s：被搜索字符串；t：需要覆盖的字符\n    cnt, missing = Counter(t), len(t)  # cnt：每个字符的缺额（负数表示多余）；missing：总缺额\n    left = start = 0  # left：窗口左端；start：最短合法窗口起点\n    size = len(s) + 1  # size：最短合法窗口长度；初值表示尚未找到\n    for right, ch in enumerate(s):  # right：窗口右端；ch：新加入的字符\n        missing -= cnt[ch] > 0\n        cnt[ch] -= 1\n        while missing == 0 and left <= right:\n            if right - left + 1 < size: start, size = left, right - left + 1\n            cnt[s[left]] += 1\n            missing += cnt[s[left]] > 0\n            left += 1\n    print(s[start:start + size] if t and size <= len(s) else '')\n\nmain()",
+      "starterCode": "# LC76 · 最小覆盖子串\n# 输入：第一行 s；第二行 t\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "ADOBECODEBANC\nABC\n",
+      "expectedOutput": "BANC",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC76 · 最小覆盖子串\n# 输入：第一行 s；第二行 t\n\ndef main():\n    s, t = input().strip(), input().strip()  # s：被搜索字符串；t：需要覆盖的字符\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-53",
+      "sequence": 13,
+      "lc": 53,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最大子数组和",
+      "category": "普通数组",
+      "tags": [
+        "普通数组",
+        "Kadane DP"
+      ],
+      "statement": [
+        "给定一个非空整数数组 `nums`，从中选择至少一个连续元素，使这些元素的和尽可能大。",
+        "第一行输入整数 `n`，第二行输入 `n` 个整数；数组中可能全部是负数。",
+        "输出所有非空连续子数组中的最大元素和。"
+      ],
+      "approach": "遍历 nums 时让 cur 取“从当前数重新开始”和“接到前一段后面”的较大和，再用 ans 保存全局最大值。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "O(n) 时间 / O(1) 辅助空间；不计输入数组。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    cur = ans = nums[0]  # cur：以当前位置结尾的最大和；ans：全局最大和\n    for i in range(1, n):  # i：当前元素下标\n        x = nums[i]  # x：当前元素\n        cur = max(x, cur + x)\n        ans = max(ans, cur)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC53 · 最大子数组和\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "9\n-2 1 -3 4 -1 2 1 -5 4\n",
+      "expectedOutput": "6",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC53 · 最大子数组和\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-56",
+      "lc": 56,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "合并区间",
+      "category": "普通数组",
+      "tags": [
+        "普通数组"
+      ],
+      "statement": [
+        "合并所有重叠或端点相接的闭区间，输出覆盖范围相同且互不重叠的区间。",
+        "第一行输入区间数 `n`，随后每行输入一对端点，按左端点递增输出合并结果，每行一对端点。"
+      ],
+      "approach": "按左端点排序后依次扫描，重叠时扩大 ans 最后一个区间的右端点，否则加入新区间。",
+      "inputContract": "n；随后 n 行 left right",
+      "complexity": "时间 O(n log n)，空间 O(n)（含排序与结果）。",
+      "referenceCode": "def main():\n    n = int(input())  # n：区间个数\n    intervals = [list(map(int, input().split())) for _ in range(n)]  # intervals：闭区间列表\n    ans = []  # ans：已经合并好的区间\n    for left, right in sorted(intervals):  # left、right：当前区间端点\n        if ans and left <= ans[-1][1]: ans[-1][1] = max(ans[-1][1], right)\n        else: ans.append([left, right])\n    for row in ans: print(*row)  # row：一个合并后的区间\n\nmain()",
+      "starterCode": "# LC56 · 合并区间\n# 输入：n；随后 n 行 left right\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC56 · 合并区间\n# 输入：n；随后 n 行 left right\n\ndef main():\n    n = int(input())  # n：区间个数\n    intervals = [list(map(int, input().split())) for _ in range(n)]  # intervals：闭区间列表\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n1 4\n3 6\n8 10\n10 12\n",
+      "expectedOutput": "1 6\n8 12",
+      "normalizer": "trim",
+      "sequence": 14
+    },
+    {
+      "id": "lc-189",
+      "lc": 189,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "轮转数组",
+      "category": "普通数组",
+      "tags": [
+        "普通数组"
+      ],
+      "statement": [
+        "将非空数组向右轮转 `k` 位，移出右端的元素从左端进入，要求原地完成。",
+        "第一行输入 `n k`，第二行输入数组，`k` 为非负整数，输出轮转后的数组。"
+      ],
+      "approach": "先将 k 对 n 取余，再依次反转整个数组、前 k 个数和剩余部分，实现原地右移。",
+      "inputContract": "n k；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def reverse_range(nums, left, right):  # nums：数组；left、right：待反转区间端点\n    while left < right:\n        nums[left], nums[right] = nums[right], nums[left]\n        left += 1\n        right -= 1\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：向右轮转的步数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    k %= n\n    reverse_range(nums, 0, n - 1)\n    reverse_range(nums, 0, k - 1)\n    reverse_range(nums, k, n - 1)\n    print(*nums)\n\nmain()",
+      "starterCode": "# LC189 · 轮转数组\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC189 · 轮转数组\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：向右轮转的步数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5 2\n1 2 3 4 5\n",
+      "expectedOutput": "4 5 1 2 3",
+      "normalizer": "trim",
+      "sequence": 15
+    },
+    {
+      "id": "lc-238",
+      "lc": 238,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "除了自身以外数组的乘积",
+      "category": "普通数组",
+      "tags": [
+        "普通数组"
+      ],
+      "statement": [
+        "为每个位置计算除该位置之外所有元素的乘积，不使用除法，数组至少包含两个元素。",
+        "第一行输入 `n`，第二行输入数组，按原下标顺序输出结果。"
+      ],
+      "approach": "先用 prefix 把每个位置左侧的乘积存入 ans，再从右向左乘上 suffix 得到除自身外的乘积。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)（不计输出数组）。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    ans = [1] * n  # ans：各位置除自身外的乘积\n    prefix = suffix = 1  # prefix、suffix：当前位置左侧、右侧的乘积\n    for i in range(n):  # i：当前下标\n        ans[i] = prefix\n        prefix *= nums[i]\n    for i in range(n - 1, -1, -1):\n        ans[i] *= suffix\n        suffix *= nums[i]\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC238 · 除了自身以外数组的乘积\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC238 · 除了自身以外数组的乘积\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n2 3 4 5\n",
+      "expectedOutput": "60 40 30 24",
+      "normalizer": "trim",
+      "sequence": 16
+    },
+    {
+      "id": "lc-41",
+      "lc": 41,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "缺失的第一个正数",
+      "category": "普通数组",
+      "tags": [
+        "普通数组"
+      ],
+      "statement": [
+        "给定未排序的整数数组，找出没有出现在数组中的最小正整数。",
+        "第一行输入 `n`，第二行输入数组，要求线性时间和常数额外空间，输出这个正整数。"
+      ],
+      "approach": "将范围内的数 x 交换到下标 x - 1，完成归位后第一个不满足 nums[i] 等于 i + 1 的位置就是答案。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    for i in range(n):  # i：当前待归位位置\n        while 1 <= nums[i] <= n and nums[nums[i] - 1] != nums[i]:\n            j = nums[i] - 1  # j：当前数应放到的下标\n            nums[i], nums[j] = nums[j], nums[i]\n    ans = next((i + 1 for i in range(n) if nums[i] != i + 1), n + 1)  # ans：首个缺失正整数\n    print(ans)\n\nmain()",
+      "starterCode": "# LC41 · 缺失的第一个正数\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC41 · 缺失的第一个正数\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n3 4 -1 1\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 17
+    },
+    {
+      "id": "lc-73",
+      "lc": 73,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "矩阵置零",
+      "category": "矩阵",
+      "tags": [
+        "矩阵"
+      ],
+      "statement": [
+        "如果原矩阵中的某个元素为零，就把它所在的整行和整列置零，要求原地修改。",
+        "第一行输入正整数 `m n`，随后输入矩阵，输出处理后的矩阵，每行一行。"
+      ],
+      "approach": "用首行和首列标记需要清零的列和行，先处理内部元素，再按原始零标记处理首行与首列。",
+      "inputContract": "m n；随后 m 行，每行 n 个整数",
+      "complexity": "时间 O(mn)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n    zero_row = 0 in grid[0]  # zero_row：原首行是否含零\n    zero_col = any(grid[r][0] == 0 for r in range(m))  # zero_col：原首列是否含零；r：行号\n    for r in range(1, m):\n        for c in range(1, n):  # c：列号\n            if grid[r][c] == 0: grid[r][0] = grid[0][c] = 0\n    for r in range(1, m):\n        for c in range(1, n):\n            if grid[r][0] == 0 or grid[0][c] == 0: grid[r][c] = 0\n    if zero_row:\n        for c in range(n): grid[0][c] = 0\n    if zero_col:\n        for r in range(m): grid[r][0] = 0\n    for row in grid: print(*row)  # row：输出矩阵的一行\n\nmain()",
+      "starterCode": "# LC73 · 矩阵置零\n# 输入：m n；随后 m 行，每行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC73 · 矩阵置零\n# 输入：m n；随后 m 行，每行 n 个整数\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 3\n1 2 3\n4 0 6\n7 8 9\n",
+      "expectedOutput": "1 0 3\n0 0 0\n7 0 9",
+      "normalizer": "trim",
+      "sequence": 18
+    },
+    {
+      "id": "lc-54",
+      "lc": 54,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "螺旋矩阵",
+      "category": "矩阵",
+      "tags": [
+        "矩阵"
+      ],
+      "statement": [
+        "从矩阵左上角开始，按顺时针方向从外到内逐圈访问所有元素。",
+        "第一行输入正整数 `m n`，随后输入矩阵，在一行输出访问顺序。"
+      ],
+      "approach": "维护 top、bottom、left、right 四条边界，按上右下左依次收集元素，每走完一边就收缩对应边界。",
+      "inputContract": "m n；随后 m 行，每行 n 个整数",
+      "complexity": "时间 O(mn)，额外空间 O(1)（不计输出列表）。",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n    top, bottom, left, right = 0, m - 1, 0, n - 1  # 四个变量：尚未访问区域的上下左右边界\n    ans = []  # ans：螺旋访问结果\n    while top <= bottom and left <= right:\n        for c in range(left, right + 1): ans.append(grid[top][c])  # c：列号\n        top += 1\n        for r in range(top, bottom + 1): ans.append(grid[r][right])  # r：行号\n        right -= 1\n        if top <= bottom:\n            for c in range(right, left - 1, -1): ans.append(grid[bottom][c])\n            bottom -= 1\n        if left <= right:\n            for r in range(bottom, top - 1, -1): ans.append(grid[r][left])\n            left += 1\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC54 · 螺旋矩阵\n# 输入：m n；随后 m 行，每行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC54 · 螺旋矩阵\n# 输入：m n；随后 m 行，每行 n 个整数\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "2 3\n1 2 3\n4 5 6\n",
+      "expectedOutput": "1 2 3 6 5 4",
+      "normalizer": "trim",
+      "sequence": 19
+    },
+    {
+      "id": "lc-48",
+      "lc": 48,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "旋转图像",
+      "category": "矩阵",
+      "tags": [
+        "矩阵"
+      ],
+      "statement": [
+        "将一个方阵顺时针旋转 90 度，要求直接修改原矩阵。",
+        "第一行输入阶数 `n`，随后输入 `n` 行整数，按行输出旋转后的方阵。"
+      ],
+      "approach": "先交换主对角线两侧的元素完成转置，再将每一行反转，得到顺时针旋转 90 度的矩阵。",
+      "inputContract": "n；随后 n 行，每行 n 个整数",
+      "complexity": "时间 O(n²)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：方阵阶数\n    grid = [list(map(int, input().split())) for _ in range(n)]  # grid：输入方阵\n    for r in range(n):  # r：行号\n        for c in range(r):  # c：主对角线左侧的列号\n            grid[r][c], grid[c][r] = grid[c][r], grid[r][c]\n    for row in grid:  # row：矩阵的一行\n        row.reverse()\n        print(*row)\n\nmain()",
+      "starterCode": "# LC48 · 旋转图像\n# 输入：n；随后 n 行，每行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC48 · 旋转图像\n# 输入：n；随后 n 行，每行 n 个整数\n\ndef main():\n    n = int(input())  # n：方阵阶数\n    grid = [list(map(int, input().split())) for _ in range(n)]  # grid：输入方阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "2\n1 2\n3 4\n",
+      "expectedOutput": "3 1\n4 2",
+      "normalizer": "trim",
+      "sequence": 20
+    },
+    {
+      "id": "lc-240",
+      "lc": 240,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "搜索二维矩阵 II",
+      "category": "矩阵",
+      "tags": [
+        "矩阵"
+      ],
+      "statement": [
+        "矩阵的每一行从左到右递增，每一列从上到下递增，判断目标值是否存在。",
+        "第一行输入 `m n target`，随后输入矩阵，输出小写 `true` 或 `false`。"
+      ],
+      "approach": "从右上角开始比较 target，当前值较大就左移、较小就下移，每次排除一列或一行。",
+      "inputContract": "m n target；随后 m 行矩阵",
+      "complexity": "时间 O(m+n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    m, n, target = map(int, input().split())  # m、n：行列数；target：目标值\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n    row, col = 0, n - 1  # row、col：当前查找位置\n    while row < m and col >= 0:\n        if grid[row][col] == target:\n            print('true')\n            return\n        if grid[row][col] > target: col -= 1\n        else: row += 1\n    print('false')\n\nmain()",
+      "starterCode": "# LC240 · 搜索二维矩阵 II\n# 输入：m n target；随后 m 行矩阵\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC240 · 搜索二维矩阵 II\n# 输入：m n target；随后 m 行矩阵\n\ndef main():\n    m, n, target = map(int, input().split())  # m、n：行列数；target：目标值\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 3 6\n1 4 7\n2 5 8\n3 6 9\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 21
+    },
+    {
+      "id": "lc-160",
+      "sequence": 22,
+      "lc": 160,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "相交链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "双指针换头"
+      ],
+      "statement": [
+        "构造两个单链表 `A` 和 `B`：它们各自拥有一段独立前缀，并可能共享同一段实际节点组成的公共尾链。请找出两个链表开始相交的节点。",
+        "第一行输入 `na nb nc`，接下来三行依次输入 `A` 的 `na` 个前缀节点值、`B` 的 `nb` 个前缀节点值，以及长度为 `nc` 的公共尾链节点值。",
+        "若存在公共尾链，输出第一个公共节点的值；若两链表不相交，则输出 `-1`。"
+      ],
+      "approach": "让 p、q 分别遍历两条链表，到末尾后换到另一条的头部，最终在交点或空节点相遇。",
+      "inputContract": "na nb nc；后三行 A前缀/B前缀/公共尾",
+      "complexity": "O(n+m) / O(1)",
+      "referenceCode": "def main():\n    na, nb, nc = map(int, input().split())  # na、nb：两条独有前缀长度；nc：公共尾部长度\n    a = list(map(int, input().split()))  # a：第一条链表的独有前缀值\n    b = list(map(int, input().split()))  # b：第二条链表的独有前缀值\n    tail = build_list(list(map(int, input().split())))  # tail：两条链表共享的尾部头节点\n    a, b = chain(a, tail), chain(b, tail)  # a、b：拼接公共尾部后的链表头节点\n    p, q = a, b  # p、q：分别从 a、b 出发的遍历指针\n    while p is not q:\n        p = p.next if p else b\n        q = q.next if q else a\n    print(p.val if p else -1)\n\nmain()",
+      "starterCode": "# LC160 · 相交链表\n# 输入：na nb nc；后三行 A前缀/B前缀/公共尾\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "2 3 3\n4 1\n5 6 1\n8 4 5\n",
+      "expectedOutput": "8",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC160 · 相交链表\n# 输入：na nb nc；后三行 A前缀/B前缀/公共尾\n\ndef main():\n    na, nb, nc = map(int, input().split())  # na、nb：独有前缀长度；nc：公共尾部长度\n    a = list(map(int, input().split()))  # a：第一条链表的独有前缀值\n    b = list(map(int, input().split()))  # b：第二条链表的独有前缀值\n    tail = build_list(list(map(int, input().split())))  # tail：共享尾部头节点\n    a, b = chain(a, tail), chain(b, tail)  # a、b：共享同一尾部的两条链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-206",
+      "sequence": 23,
+      "lc": 206,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "反转链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "链表指针"
+      ],
+      "statement": [
+        "给定一个单链表，将所有节点的连接方向反转，使原链表尾节点成为新链表头节点。",
+        "第一行输入节点数 `n`，第二行按链表原顺序输入 `n` 个节点值；链表为空时 `n = 0`。",
+        "从新链表头开始依次输出所有节点值，以空格分隔。"
+      ],
+      "approach": "逐个用 nxt 暂存后继，让 cur 指向 prev 并推进两个指针，最后返回新的头节点 prev。",
+      "inputContract": "n；下一行 n 个值（复用附录链表模板）",
+      "complexity": "O(n) / O(1)",
+      "referenceCode": "def reverse(head):  # head：待反转链表的头节点\n    prev, cur = None, head  # prev：已反转部分的头；cur：当前节点\n    while cur:\n        nxt = cur.next  # nxt：暂存原来的下一节点\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    print_list(reverse(head))\n\nmain()",
+      "starterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（复用附录链表模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\n1 2 3 4 5\n",
+      "expectedOutput": "5 4 3 2 1",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（复用附录链表模板）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-234",
+      "sequence": 24,
+      "lc": 234,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "回文链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "快慢 + 反转"
+      ],
+      "statement": [
+        "给定一个单链表，判断从头到尾读取的节点值序列是否为回文，即正向和反向读取完全相同。",
+        "第一行输入节点数 `n`，第二行按链表顺序输入 `n` 个节点值。",
+        "若节点值序列是回文则输出小写 `true`，否则输出小写 `false`。"
+      ],
+      "approach": "用 slow、fast 找到后半段起点，调用 reverse 反转后半段，再与前半段逐个比较节点值判断是否回文。",
+      "inputContract": "n；下一行 n 个值（复用附录）",
+      "complexity": "O(n) / O(1)",
+      "referenceCode": "def reverse(head):  # head：待反转链表的头节点\n    prev, cur = None, head  # prev：已反转部分的头；cur：当前节点\n    while cur:\n        nxt = cur.next  # nxt：暂存原来的下一节点\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    slow = fast = head  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n    cur = reverse(slow)  # cur：反转后半段的当前节点；head：前半段当前节点\n    while cur:\n        if head.val != cur.val:\n            print('false')\n            return\n        head, cur = head.next, cur.next\n    print('true')\n\nmain()",
+      "starterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\n1 2 3 2 1\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-141",
+      "sequence": 25,
+      "lc": 141,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "环形链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "快慢指针"
+      ],
+      "statement": [
+        "给定一个单链表，判断沿着 `next` 指针不断前进时是否会再次到达已经访问过的节点。",
+        "第一行输入 `n pos`，第二行输入 `n` 个节点值。`pos` 是尾节点所连接节点的零基下标；当 `pos = -1` 时，尾节点不连接到此前节点。",
+        "若链表存在环则输出小写 `true`，否则输出小写 `false`。"
+      ],
+      "approach": "让 slow 每次走一步、fast 每次走两步，途中相遇就判定有环，否则到达末尾时判定无环。",
+      "inputContract": "n pos；下一行 n 个值（pos=-1 无环）",
+      "complexity": "O(n) / O(1)",
+      "referenceCode": "def main():\n    n, pos = map(int, input().split())  # n：节点数；pos：环入口下标，-1 表示无环\n    head = build_cycle(list(map(int, input().split())), pos)  # head：按 pos 构造的链表头节点\n    slow = fast = head  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n        if slow is fast:\n            print('true')\n            return\n    print('false')\n\nmain()",
+      "starterCode": "# LC141 · 环形链表\n# 输入：n pos；下一行 n 个值（pos=-1 无环）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 1\n3 2 0 -4\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC141 · 环形链表\n# 输入：n pos；下一行 n 个值（pos=-1 无环）\n\ndef main():\n    n, pos = map(int, input().split())  # n：节点数；pos：环入口下标，-1 表示无环\n    head = build_cycle(list(map(int, input().split())), pos)  # head：已按 pos 构造的链表头\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-142",
+      "sequence": 26,
+      "lc": 142,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "环形链表 II",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "Floyd"
+      ],
+      "statement": [
+        "给定一个可能存在环的单链表，找出链表开始进入环的节点；若不存在环，则报告无环。",
+        "第一行输入 `n pos`，第二行输入 `n` 个节点值。`pos` 是尾节点所连接节点的零基下标；当 `pos = -1` 时链表无环。",
+        "存在环时输出入环节点的值，不存在环时输出 `-1`。"
+      ],
+      "approach": "先让 slow、fast 以一步和两步相遇，再让 head 与 slow 同速前进，第二次相遇的位置就是环入口。",
+      "inputContract": "n pos；下一行 n 个值",
+      "complexity": "O(n) / O(1)",
+      "referenceCode": "def detect_cycle(head):  # head：头节点；相遇后从头出发寻找环入口\n    slow = fast = head  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n        if slow is fast:\n            while head is not slow:\n                head, slow = head.next, slow.next\n            return head\n\ndef main():\n    n, pos = map(int, input().split())  # n：节点数；pos：环入口下标，-1 表示无环\n    head = build_cycle(list(map(int, input().split())), pos)  # head：按 pos 构造的链表头节点\n    node = detect_cycle(head)  # node：环入口节点；无环时为 None\n    print(node.val if node else -1)\n\nmain()",
+      "starterCode": "# LC142 · 环形链表 II\n# 输入：n pos；下一行 n 个值\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 1\n3 2 0 -4\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC142 · 环形链表 II\n# 输入：n pos；下一行 n 个值\n\ndef main():\n    n, pos = map(int, input().split())  # n：节点数；pos：环入口下标，-1 表示无环\n    head = build_cycle(list(map(int, input().split())), pos)  # head：已按 pos 构造的链表头\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-21",
+      "sequence": 27,
+      "lc": 21,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "合并两个有序链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "dummy"
+      ],
+      "statement": [
+        "给定两个按非递减顺序排列的单链表，将它们合并成一个同样按非递减顺序排列的链表。",
+        "第一行输入 `n m`，第二行输入第一个链表的 `n` 个节点值，第三行输入第二个链表的 `m` 个节点值。",
+        "从合并后链表的头节点开始依次输出所有节点值，以空格分隔。"
+      ],
+      "approach": "反复将 a、b 中较小的节点接到 cur 后面，最后接上未耗尽的链表并返回 dummy 后的合并结果。",
+      "inputContract": "n m；第2/3行两链表值（复用附录）",
+      "complexity": "O(n+m) / O(1)",
+      "referenceCode": "def merge(a, b):  # a、b：两条待合并链表的当前节点\n    cur = dummy = Node()  # dummy：哑节点；cur：合并结果的尾节点\n    while a and b:\n        if a.val > b.val:\n            a, b = b, a\n        cur.next = a\n        a = a.next\n        cur = cur.next\n    cur.next = a or b\n    return dummy.next\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n    print_list(merge(a, b))\n\nmain()",
+      "starterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 3\n1 2 4\n1 3 4\n",
+      "expectedOutput": "1 1 2 3 4 4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（复用附录）\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-2",
+      "lc": 2,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "两数相加",
+      "category": "链表",
+      "tags": [
+        "链表"
+      ],
+      "statement": [
+        "两条非空链表分别用逆序数字表示两个非负整数，计算它们的和并仍用逆序数字链表表示。",
+        "第一行输入节点数 `n m`，后两行分别输入两条链表的数字，输出结果链表中的数字。"
+      ],
+      "approach": "同步遍历 a、b，将当前数字与 carry 相加，用个位建立新节点、十位更新进位，直到两链表和进位都耗尽。",
+      "inputContract": "n m；后两行分别为两条链表的数字",
+      "complexity": "时间 O(n+m)，额外空间 O(1)（不计输出链表）。",
+      "referenceCode": "def main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n    cur = dummy = Node()  # dummy：哑节点；cur：结果链表尾节点\n    carry = 0  # carry：向下一位的进位\n    while a or b or carry:\n        total = carry + (a.val if a else 0) + (b.val if b else 0)  # total：当前位的总和\n        carry, x = divmod(total, 10)  # x：当前结果位的数字\n        cur.next = Node(x)\n        cur = cur.next\n        a = a.next if a else None\n        b = b.next if b else None\n    print_list(dummy.next)\n\nmain()",
+      "starterCode": "# LC2 · 两数相加\n# 输入：n m；后两行分别为两条链表的数字\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC2 · 两数相加\n# 输入：n m；后两行分别为两条链表的数字\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 3\n2 4 3\n5 6 4\n",
+      "expectedOutput": "7 0 8",
+      "normalizer": "trim",
+      "sequence": 28
+    },
+    {
+      "id": "lc-19",
+      "lc": 19,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "删除链表的倒数第 N 个结点",
+      "category": "链表",
+      "tags": [
+        "链表"
+      ],
+      "statement": [
+        "删除单链表的倒数第 `k` 个节点，保证 `1 ≤ k ≤ n`。",
+        "第一行输入节点数 `n` 和倒数位置 `k`，第二行输入链表节点值，输出删除后的链表，空链表输出空行。"
+      ],
+      "approach": "让 fast 先走 k 步，再与 slow 同步前进，fast 到达尾节点时由 slow 跳过待删除节点。",
+      "inputContract": "n k；下一行 n 个节点值",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n, k = map(int, input().split())  # n：节点数；k：要删除的倒数位置\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    slow = fast = dummy = Node(0, head)  # dummy：哑节点；slow：待删节点前驱；fast：领先指针\n    for _ in range(k): fast = fast.next\n    while fast.next:\n        slow, fast = slow.next, fast.next\n    slow.next = slow.next.next\n    print_list(dummy.next)\n\nmain()",
+      "starterCode": "# LC19 · 删除链表的倒数第 N 个结点\n# 输入：n k；下一行 n 个节点值\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC19 · 删除链表的倒数第 N 个结点\n# 输入：n k；下一行 n 个节点值\n\ndef main():\n    n, k = map(int, input().split())  # n：节点数；k：要删除的倒数位置\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5 2\n1 2 3 4 5\n",
+      "expectedOutput": "1 2 3 5",
+      "normalizer": "trim",
+      "sequence": 29
+    },
+    {
+      "id": "lc-24",
+      "lc": 24,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "两两交换链表中的节点",
+      "category": "链表",
+      "tags": [
+        "链表"
+      ],
+      "statement": [
+        "把链表中相邻两个节点成对交换，最后剩下的单个节点保持不动，不能只交换节点值。",
+        "第一行输入 `n`，第二行输入节点值，输出交换后的链表。"
+      ],
+      "approach": "用 prev 指向每对节点的前驱，将 a、b 调整为 prev→b→a→后继，再让 prev 移到 a 处理下一对。",
+      "inputContract": "n；下一行 n 个节点值",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    prev = dummy = Node(0, head)  # dummy：哑节点；prev：当前一对节点的前驱\n    while prev.next and prev.next.next:\n        a, b = prev.next, prev.next.next  # a、b：当前要交换的两个节点\n        a.next, b.next, prev.next = b.next, a, b\n        prev = a\n    print_list(dummy.next)\n\nmain()",
+      "starterCode": "# LC24 · 两两交换链表中的节点\n# 输入：n；下一行 n 个节点值\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC24 · 两两交换链表中的节点\n# 输入：n；下一行 n 个节点值\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n1 2 3 4 5\n",
+      "expectedOutput": "2 1 4 3 5",
+      "normalizer": "trim",
+      "sequence": 30
+    },
+    {
+      "id": "lc-25",
+      "lc": 25,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "K 个一组翻转链表",
+      "category": "链表",
+      "tags": [
+        "链表"
+      ],
+      "statement": [
+        "按每组 `k` 个节点反转链表，尾部不足 `k` 个的部分保持原顺序，不能只交换节点值。",
+        "第一行输入 `n k`，第二行输入节点值，保证 `k ≥ 1`，输出处理后的链表。"
+      ],
+      "approach": "每次找到完整的 k 个节点并暂时断开，调用 reverse 反转本组后接回前后链表，不足一组就结束。",
+      "inputContract": "n k；下一行 n 个节点值",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def reverse(head):  # head：待反转链表的头节点\n    prev, cur = None, head  # prev：已反转部分的头；cur：当前节点\n    while cur:\n        nxt = cur.next  # nxt：暂存原来的下一节点\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef main():\n    n, k = map(int, input().split())  # n：节点数；k：每组大小\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    prev = dummy = Node(0, head)  # dummy：哑节点；prev：本组前驱\n    while True:\n        cur = prev  # cur：用于寻找本组末尾\n        for _ in range(k):\n            cur = cur.next\n            if not cur:\n                print_list(dummy.next)\n                return\n        nxt, cur.next = cur.next, None  # nxt：下一组头节点；暂时断开本组\n        start = prev.next  # start：本组原头节点，反转后为尾节点\n        prev.next = reverse(start)\n        start.next = nxt\n        prev = start\n\nmain()",
+      "starterCode": "# LC25 · K 个一组翻转链表\n# 输入：n k；下一行 n 个节点值\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC25 · K 个一组翻转链表\n# 输入：n k；下一行 n 个节点值\n\ndef main():\n    n, k = map(int, input().split())  # n：节点数；k：每组大小\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5 3\n1 2 3 4 5\n",
+      "expectedOutput": "3 2 1 4 5",
+      "normalizer": "trim",
+      "sequence": 31
+    },
+    {
+      "id": "lc-138",
+      "lc": 138,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "随机链表的复制",
+      "category": "链表",
+      "tags": [
+        "链表"
+      ],
+      "statement": [
+        "复制带有 `next` 和 `random` 指针的链表，新旧节点不能共享对象，随机指针的对应关系必须保持。",
+        "第一行输入 `n`，随后每行输入 `val random_index`，随机指针用零基下标表示，`-1` 表示空指针。",
+        "按 next 顺序逐行输出复制链表的 `val random_index`；空链表无输出。"
+      ],
+      "approach": "先用 copies 为每个旧节点创建对应的新节点，再按映射连接新节点的 next 和 random，得到独立的深拷贝。",
+      "inputContract": "n；随后 n 行 val random_index（-1 表示空）",
+      "complexity": "时间 O(n)，额外空间 O(n)。",
+      "referenceCode": "class RNode:\n    def __init__(self, val):  # val：节点值\n        self.val = val\n        self.next = self.random = None  # next：后继节点；random：随机指针\n\ndef copy_random(head):  # head：原链表头节点\n    copies, cur = {None: None}, head  # copies：旧节点 → 新节点；cur：当前旧节点\n    while cur:\n        copies[cur] = RNode(cur.val)\n        cur = cur.next\n    cur = head\n    while cur:\n        copies[cur].next = copies[cur.next]\n        copies[cur].random = copies[cur.random]\n        cur = cur.next\n    return copies[head]\n\ndef main():\n    n = int(input())  # n：节点数\n    rows = [list(map(int, input().split())) for _ in range(n)]  # rows：节点值与随机指针下标\n    nodes = [RNode(val) for val, _ in rows]  # nodes：原链表节点；val：节点值\n    for i, (_, j) in enumerate(rows):  # i：当前下标；j：随机指针下标\n        nodes[i].next = nodes[i + 1] if i + 1 < n else None\n        nodes[i].random = nodes[j] if j >= 0 else None\n    head = nodes[0] if nodes else None  # head：原链表头节点\n    head = copy_random(head)\n    nodes, cur = [], head  # nodes：复制后的节点列表；cur：当前节点\n    while cur:\n        nodes.append(cur)\n        cur = cur.next\n    index = {node: i for i, node in enumerate(nodes)}  # index：新节点 → 下标\n    for node in nodes: print(node.val, index.get(node.random, -1))  # node：当前输出节点\n\nmain()",
+      "starterCode": "# LC138 · 随机链表的复制\n# 输入：n；随后 n 行 val random_index（-1 表示空）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC138 · 随机链表的复制\n# 输入：n；随后 n 行 val random_index（-1 表示空）\n\nclass RNode:\n    def __init__(self, val):  # val：节点值\n        self.val = val\n        self.next = self.random = None  # next：后继节点；random：随机指针\n\ndef main():\n    n = int(input())  # n：节点数\n    rows = [list(map(int, input().split())) for _ in range(n)]  # rows：节点值与随机指针下标\n    nodes = [RNode(val) for val, _ in rows]  # nodes：原链表节点；val：节点值\n    for i, (_, j) in enumerate(rows):  # i：当前下标；j：随机指针下标\n        nodes[i].next = nodes[i + 1] if i + 1 < n else None\n        nodes[i].random = nodes[j] if j >= 0 else None\n    head = nodes[0] if nodes else None  # head：原链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3\n7 -1\n13 0\n11 1\n",
+      "expectedOutput": "7 -1\n13 0\n11 1",
+      "normalizer": "trim",
+      "sequence": 32
+    },
+    {
+      "id": "lc-148",
+      "sequence": 33,
+      "lc": 148,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "排序链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "归并排序"
+      ],
+      "statement": [
+        "给定一个单链表，将其中的节点按节点值从小到大重新排列。",
+        "第一行输入节点数 `n`，第二行按原链表顺序输入 `n` 个节点值。",
+        "从排序后链表的头节点开始依次输出所有节点值，以空格分隔；相同数值均需保留。"
+      ],
+      "approach": "用 slow、fast 将链表从中间断开，递归排好两半后调用 merge 合成有序链表。",
+      "inputContract": "n；下一行 n 个值（复用附录）",
+      "complexity": "O(nlogn) / O(logn)",
+      "referenceCode": "def merge(a, b):  # a、b：两条待合并链表的当前节点\n    cur = dummy = Node()  # dummy：哑节点；cur：合并结果的尾节点\n    while a and b:\n        if a.val > b.val:\n            a, b = b, a\n        cur.next = a\n        a = a.next\n        cur = cur.next\n    cur.next = a or b\n    return dummy.next\n\ndef sort_list(head):  # head：待排序链表的头节点\n    if not head or not head.next: return head\n    slow, fast = head, head.next  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n    mid, slow.next = slow.next, None  # mid：右半段头节点；从 slow 后断开\n    return merge(sort_list(head), sort_list(mid))\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    print_list(sort_list(head))\n\nmain()",
+      "starterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4\n4 2 1 3\n",
+      "expectedOutput": "1 2 3 4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-23",
+      "sequence": 34,
+      "lc": 23,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "合并 K 个有序链表",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "最小堆"
+      ],
+      "statement": [
+        "给定 `k` 个单链表，每个链表中的节点值均按非递减顺序排列。请将所有节点合并为一个仍按非递减顺序排列的链表。",
+        "第一行输入整数 `k`；接下来 `k` 行分别以 `n` 开头，后跟该链表的 `n` 个节点值。`n` 为 `0` 时表示空链表。",
+        "在一行中依次输出合并后链表的全部节点值；若结果为空，则输出空行。"
+      ],
+      "approach": "每轮调用 merge 将 lists 中的链表两两合并，直到只剩一条有序链表。",
+      "inputContract": "k；接下来 k 行：n v1...vn",
+      "complexity": "O(N log k) 时间 / O(k) 辅助空间；N 为总节点数。",
+      "referenceCode": "def merge(a, b):  # a、b：两条待合并链表的当前节点\n    cur = dummy = Node()  # dummy：哑节点；cur：合并结果的尾节点\n    while a and b:\n        if a.val > b.val:\n            a, b = b, a\n        cur.next = a\n        a = a.next\n        cur = cur.next\n    cur.next = a or b\n    return dummy.next\n\ndef main():\n    k = int(input())  # k：链表条数\n    # lists：各条链表的头节点列表\n    lists = [build_list(list(map(int, input().split()))[1:]) for _ in range(k)]\n    while len(lists) > 1:\n        lists = [merge(lists[i], lists[i + 1] if i + 1 < len(lists) else None)\n                 for i in range(0, len(lists), 2)]  # i：本轮配对中第一条链表的下标\n    print_list(lists[0] if lists else None)\n\nmain()",
+      "starterCode": "# LC23 · 合并 K 个有序链表\n# 输入：k；接下来 k 行：n v1...vn\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3\n3 1 4 5\n3 1 3 4\n2 2 6\n",
+      "expectedOutput": "1 1 2 3 4 4 5 6",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC23 · 合并 K 个有序链表\n# 输入：k；接下来 k 行：n v1...vn\n\ndef main():\n    k = int(input())  # k：链表条数\n    lists = [build_list(list(map(int, input().split()))[1:]) for _ in range(k)]  # lists：各链表头，每行首项为节点数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-146",
+      "sequence": 35,
+      "lc": 146,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "LRU 缓存",
+      "category": "链表",
+      "tags": [
+        "链表",
+        "哈希 + 双向链表"
+      ],
+      "statement": [
+        "设计一个容量为 `capacity` 的 LRU 缓存，支持 `get(key)` 和 `put(key, value)` 两种操作。",
+        "`get` 在键存在时返回对应值，并将该键标记为最近使用；键不存在时返回 `-1`。`put` 用于新增或更新键值，同样会将该键标记为最近使用；新增后若容量超限，应删除最久未使用的键。",
+        "第一行输入 `capacity q`，随后输入 `q` 条操作。仅对每条 `get k` 操作按出现顺序逐行输出结果，`put k v` 不产生输出。"
+      ],
+      "approach": "用 OrderedDict 按使用时间保存缓存，每次读写都移到右端，超出 capacity 时删除左端最久未用的项。",
+      "inputContract": "capacity q；后 q 行 get k / put k v",
+      "complexity": "get/put O(1) / O(capacity)",
+      "referenceCode": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity):  # capacity：缓存容量上限\n        # self.cache：键值缓存，左端最久未用、右端最近使用\n        self.capacity, self.cache = capacity, OrderedDict()\n    def get(self, key):  # key：要查询的键\n        if key not in self.cache: return -1\n        self.cache.move_to_end(key)\n        return self.cache[key]\n    def put(self, key, value):  # key：要写入的键；value：对应的值\n        self.cache[key] = value\n        self.cache.move_to_end(key)\n        if len(self.cache) > self.capacity: self.cache.popitem(last=False)\n\ndef main():\n    capacity, q = map(int, input().split())  # capacity：容量上限；q：操作次数\n    cache = LRUCache(capacity)  # cache：LRU 缓存对象\n    for _ in range(q):\n        op, *args = input().split()  # op：操作名；args：操作参数\n        if op == 'get': print(cache.get(int(args[0])))\n        else: cache.put(*map(int, args))\n\nmain()",
+      "starterCode": "# LC146 · LRU 缓存\n# 输入：capacity q；后 q 行 get k / put k v\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "2 9\nput 1 1\nput 2 2\nget 1\nput 3 3\nget 2\nput 4 4\nget 1\nget 3\nget 4\n",
+      "expectedOutput": "1\n-1\n-1\n3\n4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC146 · LRU 缓存\n# 输入：capacity q；后 q 行 get k / put k v\n\ndef main():\n    capacity, q = map(int, input().split())  # capacity：容量；q：操作次数\n    ops = [input().split() for _ in range(q)]  # ops：操作列表，每项为 get key 或 put key value\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-94",
+      "sequence": 36,
+      "lc": 94,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树中序遍历",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "DFS",
+        "栈"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，输出它的中序遍历结果，即按左子树、根节点、右子树的顺序访问所有节点。",
+        "输入为一行二叉树层序序列，节点之间以空格分隔，`null` 表示对应位置没有节点。",
+        "在一行中按访问顺序输出所有节点值；空树输出空行。"
+      ],
+      "approach": "用 stack 保存沿左子树经过的节点，依次弹栈输出节点值并转向右子树，完成左、根、右的中序遍历。",
+      "inputContract": "一行层序值，null 表示空（复用附录树模板）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def inorder(root):  # root：待遍历子树的根节点\n    stack, cur = [], root  # stack：待访问节点栈；cur：当前节点\n    while cur or stack:\n        while cur:\n            stack.append(cur)\n            cur = cur.left\n        cur = stack.pop()\n        yield cur.val\n        cur = cur.right\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(*inorder(root))\n\nmain()",
+      "starterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（复用附录树模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "1 null 2 3\n",
+      "expectedOutput": "1 3 2",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（复用附录树模板）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-104",
+      "sequence": 37,
+      "lc": 104,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树最大深度",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "递归 DFS"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，求它的最大深度。最大深度是从根节点到最远叶子节点所经过的节点数量。",
+        "输入为一行二叉树层序序列，`null` 表示空节点；仅含 `null` 时表示空树。",
+        "输出一个整数表示最大深度，空树的深度为 `0`。"
+      ],
+      "approach": "递归计算左右子树的深度，空节点返回 0，非空节点返回较大子树深度加 1。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def depth(node):  # node：当前子树根节点\n    return 1 + max(depth(node.left), depth(node.right)) if node else 0\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(depth(root))\n\nmain()",
+      "starterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 9 20 null null 15 7\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-226",
+      "sequence": 38,
+      "lc": 226,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "翻转二叉树",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "递归"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，将其转换为镜像树：每个节点原来的左子树和右子树需要互换。",
+        "输入为一行二叉树层序序列，节点之间以空格分隔，`null` 表示空节点。",
+        "输出翻转后树的层序序列，末尾多余的 `null` 不输出；空树输出空行。"
+      ],
+      "approach": "递归翻转左右子树，再将翻转后的右子树放到左边、左子树放到右边。",
+      "inputContract": "一行层序值；输出翻转后层序",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def invert(node):  # node：当前子树根节点\n    if node:\n        node.left, node.right = invert(node.right), invert(node.left)\n    return node\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(*serialize(invert(root)))\n\nmain()",
+      "starterCode": "# LC226 · 翻转二叉树\n# 输入：一行层序值；输出翻转后层序\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 2 7 1 3 6 9\n",
+      "expectedOutput": "4 7 2 9 6 3 1",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC226 · 翻转二叉树\n# 输入：一行层序值；输出翻转后层序\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-101",
+      "sequence": 39,
+      "lc": 101,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "对称二叉树",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "镜像递归"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，判断它是否关于根节点所在的竖直轴左右镜像对称。",
+        "输入为一行二叉树层序序列，`null` 表示空节点。对称位置必须同时为空，或同时存在且节点值相等、其子树结构也互为镜像。",
+        "若整棵树对称则输出 `true`，否则输出 `false`；空树视为对称。"
+      ],
+      "approach": "递归检查 a、b 的值是否相等，并交叉比较左与右子树，空节点必须同时为空才互为镜像。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def check(a, b):  # a、b：需要互为镜像的两个子树根节点\n    if not a or not b: return a is b\n    return a.val == b.val and check(a.left, b.right) and check(a.right, b.left)\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(str(check(root, root)).lower())\n\nmain()",
+      "starterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "1 2 2 3 4 4 3\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-543",
+      "lc": 543,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树的直径",
+      "category": "二叉树",
+      "tags": [
+        "二叉树"
+      ],
+      "statement": [
+        "求二叉树任意两个节点之间最长路径的边数，路径可以不经过根节点。",
+        "输入一行层序节点值，空节点写 `null`，空树可输入 `null`，输出直径。"
+      ],
+      "approach": "递归计算每个节点的左右子树深度，用两者之和更新 ans，并向父节点返回较大深度加一。",
+      "inputContract": "一行层序节点值，null 表示空节点",
+      "complexity": "时间 O(n)，递归空间 O(h)，h 为树高。",
+      "referenceCode": "def main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    ans = 0  # ans：最长路径的边数\n    def depth(node):  # node：当前子树根节点\n        nonlocal ans\n        if not node: return 0\n        left, right = depth(node.left), depth(node.right)  # left、right：左右子树深度\n        ans = max(ans, left + right)\n        return max(left, right) + 1\n    depth(root)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC543 · 二叉树的直径\n# 输入：一行层序节点值，null 表示空节点\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC543 · 二叉树的直径\n# 输入：一行层序节点值，null 表示空节点\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "1 2 3 4 5\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "sequence": 40
+    },
+    {
+      "id": "lc-102",
+      "sequence": 41,
+      "lc": 102,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树层序遍历",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "BFS"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，按从上到下、从左到右的顺序输出每一层的节点值。",
+        "输入为一行二叉树层序序列，节点之间以空格分隔，`null` 表示空节点。",
+        "每一层的节点值输出在单独一行，同层节点以空格分隔；空树输出空行。"
+      ],
+      "approach": "用队列 q 按层取出节点，把当前层的值收集到 vals 并让子节点入队，最后逐层输出。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "from collections import deque\n\ndef levels(root):  # root：待遍历子树的根节点\n    q = deque([root]) if root else deque()  # q：按层存放待访问节点的队列\n    while q:\n        vals = []  # vals：当前层的节点值\n        for _ in range(len(q)):\n            node = q.popleft()  # node：当前出队节点\n            vals.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n        yield vals\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    for vals in levels(root):  # vals：当前层的节点值\n        print(*vals)\n\nmain()",
+      "starterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 9 20 null null 15 7\n",
+      "expectedOutput": "3\n9 20\n15 7",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-108",
+      "sequence": 42,
+      "lc": 108,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "有序数组转换为 BST",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "分治"
+      ],
+      "statement": [
+        "给定一个严格递增的整数数组 `nums`，将其转换为一棵高度平衡的二叉搜索树。高度平衡要求每个节点左右子树的高度差不超过 `1`。",
+        "第一行输入数组长度 `n`，第二行输入 `n` 个升序整数。为使本站输出唯一，每个区间含偶数个元素时，约定选取两个中间元素中偏右的一个作为该子树根节点。",
+        "输出生成树的层序序列，以 `null` 表示内部缺失的子节点，末尾多余的 `null` 不输出。"
+      ],
+      "approach": "每次选择有序数组当前区间的上中点作为根，再用左右两段递归构造平衡二叉搜索树。",
+      "inputContract": "n；下一行升序数组；输出层序",
+      "complexity": "O(n) / O(logn)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：升序输入数组\n    def build(left, right):  # left、right：当前子树对应的数组区间（均包含）\n        if left > right: return None\n        mid = (left + right + 1) // 2  # mid：区间上中点的下标\n        node = T(nums[mid])  # node：当前新建的根节点\n        node.left = build(left, mid - 1)\n        node.right = build(mid + 1, right)\n        return node\n    print(*serialize(build(0, n - 1)))\n\nmain()",
+      "starterCode": "# LC108 · 有序数组转换为 BST\n# 输入：n；下一行升序数组；输出层序\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\n-10 -3 0 5 9\n",
+      "expectedOutput": "0 -3 9 -10 null 5",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC108 · 有序数组转换为 BST\n# 输入：n；下一行升序数组；输出层序\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-98",
+      "sequence": 43,
+      "lc": 98,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "验证二叉搜索树",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "中序",
+        "上界下界"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，判断它是否为合法的二叉搜索树。",
+        "合法树要求任意节点左子树中的所有值都严格小于该节点值，右子树中的所有值都严格大于该节点值；这一条件必须对整棵子树成立，因此重复值不合法。",
+        "输入为一行层序序列，`null` 表示空节点。合法时输出 `true`，否则输出 `false`。"
+      ],
+      "approach": "递归检查每个节点值严格位于 low、high 之间，并用当前值更新左子树的上界和右子树的下界。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "# node：当前节点；low、high：节点值的严格下界、上界\ndef check(node, low=-float('inf'), high=float('inf')):\n    if not node: return True\n    return low < node.val < high and check(node.left, low, node.val) and check(node.right, node.val, high)\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(str(check(root)).lower())\n\nmain()",
+      "starterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "2 1 3\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-230",
+      "sequence": 44,
+      "lc": 230,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "BST 第 K 小元素",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "BST 中序"
+      ],
+      "statement": [
+        "给定一棵二叉搜索树 `root` 和整数 `k`，找出树中第 `k` 小的节点值，其中 `k` 从 `1` 开始计数。",
+        "第一行输入 `k`，第二行输入二叉树的层序序列，`null` 表示空节点。输入保证该树是合法的二叉搜索树，且 `k` 不超过节点总数。",
+        "输出第 `k` 小的节点值。"
+      ],
+      "approach": "调用 inorder 按递增顺序生成节点值，枚举到第 k 个时输出并结束。",
+      "inputContract": "k；下一行层序值（复用附录）",
+      "complexity": "O(h+k) / O(h)",
+      "referenceCode": "def inorder(root):  # root：待遍历子树的根节点\n    stack, cur = [], root  # stack：待访问节点栈；cur：当前节点\n    while cur or stack:\n        while cur:\n            stack.append(cur)\n            cur = cur.left\n        cur = stack.pop()\n        yield cur.val\n        cur = cur.right\n\ndef main():\n    k = int(input())  # k：要找的排名（从 1 开始）\n    root = build_tree(input().split())  # root：二叉树根节点\n    for i, x in enumerate(inorder(root), 1):  # i：中序排名；x：当前节点值\n        if i == k:\n            print(x)\n            return\n\nmain()",
+      "starterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "1\n3 1 4 null 2\n",
+      "expectedOutput": "1",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（复用附录）\n\ndef main():\n    k = int(input())  # k：要找的中序排名\n    root = build_tree(input().split())  # root：二叉搜索树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-199",
+      "sequence": 45,
+      "lc": 199,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树右视图",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "BFS"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，假设从树的右侧观察它，返回从上到下能够看到的节点值。",
+        "每一层只保留最右侧可见的一个节点。输入为一行二叉树层序序列，`null` 表示空节点。",
+        "在一行中按深度从小到大输出右视图中的节点值；空树输出空行。"
+      ],
+      "approach": "调用 levels 用队列逐层收集节点值，取每层 vals 的最后一个值组成右视图。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "from collections import deque\n\ndef levels(root):  # root：待遍历子树的根节点\n    q = deque([root]) if root else deque()  # q：按层存放待访问节点的队列\n    while q:\n        vals = []  # vals：当前层的节点值\n        for _ in range(len(q)):\n            node = q.popleft()  # node：当前出队节点\n            vals.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n        yield vals\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(*(vals[-1] for vals in levels(root)))  # vals：当前层节点值；最后一个就是右视图节点\n\nmain()",
+      "starterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "1 2 3 null 5 null 4\n",
+      "expectedOutput": "1 3 4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-114",
+      "sequence": 46,
+      "lc": 114,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树展开为链表",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "逆前序 DFS"
+      ],
+      "statement": [
+        "给定一棵二叉树 `root`，将它原地展开为一条仅使用右指针连接的单链表。",
+        "展开后的节点顺序必须与原树的前序遍历顺序一致，每个节点的左指针都应为空。",
+        "输入为一行二叉树层序序列，`null` 表示空节点；在一行中依次输出展开后右链上的节点值。"
+      ],
+      "approach": "沿 cur 的右指针遍历，每遇到左子树就把原右子树接到它的最右节点，再将左子树整体移到右边。",
+      "inputContract": "一行层序值；输出展开后的右链",
+      "complexity": "O(n) 时间 / O(1) 展开辅助空间；输出列表另占 O(n)。",
+      "referenceCode": "def main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    cur = root  # cur：当前需要展开的节点\n    while cur:\n        if cur.left:\n            prev = cur.left  # prev：用于寻找左子树最右节点的指针\n            while prev.right: prev = prev.right\n            prev.right = cur.right\n            cur.right, cur.left = cur.left, None\n        cur = cur.right\n    ans = []  # ans：展开后的节点值列表\n    while root:\n        ans.append(root.val)\n        root = root.right\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC114 · 二叉树展开为链表\n# 输入：一行层序值；输出展开后的右链\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "1 2 5 3 4 null 6\n",
+      "expectedOutput": "1 2 3 4 5 6",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC114 · 二叉树展开为链表\n# 输入：一行层序值；输出展开后的右链\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-105",
+      "sequence": 47,
+      "lc": 105,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "从前序与中序构造二叉树",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "递归 + 哈希"
+      ],
+      "statement": [
+        "给定同一棵二叉树的前序遍历数组 `preorder` 和中序遍历数组 `inorder`，还原这棵二叉树。",
+        "第一行输入节点数 `n`，第二行输入 `preorder`，第三行输入 `inorder`。两个数组长度均为 `n`，包含相同且互不重复的节点值，并保证能够构成唯一的二叉树。",
+        "输出重建后树的层序序列，以 `null` 表示内部缺失的子节点，末尾多余的 `null` 不输出。"
+      ],
+      "approach": "按 preorder 依次取根，用 index 找到根在中序序列中的位置，再按左右区间递归构造子树。",
+      "inputContract": "n；第2行 preorder；第3行 inorder",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "def main():\n    n = int(input())  # n：二叉树节点数\n    preorder = iter(map(int, input().split()))  # preorder：前序遍历迭代器，每次取下一个根\n    inorder = list(map(int, input().split()))  # inorder：中序遍历序列\n    index = {x: i for i, x in enumerate(inorder)}  # index：节点值 x → 中序下标 i\n    def build(left, right):  # left、right：当前子树的中序区间（均包含）\n        if left > right: return None\n        node = T(next(preorder))  # node：当前新建的根节点\n        mid = index[node.val]  # mid：当前根节点在中序序列中的下标\n        node.left = build(left, mid - 1)\n        node.right = build(mid + 1, right)\n        return node\n    print(*serialize(build(0, n - 1)))\n\nmain()",
+      "starterCode": "# LC105 · 从前序与中序构造二叉树\n# 输入：n；第2行 preorder；第3行 inorder\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\n3 9 20 15 7\n9 3 15 20 7\n",
+      "expectedOutput": "3 9 20 null null 15 7",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC105 · 从前序与中序构造二叉树\n# 输入：n；第2行 preorder；第3行 inorder\n\ndef main():\n    n = int(input())  # n：节点数\n    preorder = iter(map(int, input().split()))  # preorder：前序遍历迭代器\n    inorder = list(map(int, input().split()))  # inorder：中序遍历序列\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-437",
+      "sequence": 48,
+      "lc": 437,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "路径总和 III",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "树 DFS + 前缀和"
+      ],
+      "statement": [
+        "给定一棵二叉树和目标和 `target`，统计树中节点值总和恰好等于 `target` 的向下路径数量。",
+        "路径可以从任意节点开始、在任意后代节点结束，但相邻节点必须具有父子关系，且只能从父节点走向子节点。",
+        "输入首行为 `target`，第二行为包含 `null` 标记的层序树；输出满足条件的路径总数。"
+      ],
+      "approach": "沿树累加 prefix，用 cnt 中 prefix - target 的次数统计当前节点结尾的路径，递归返回时撤销当前前缀和记录。",
+      "inputContract": "target；下一行层序树（复用附录）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def main():\n    target = int(input())  # target：目标路径和\n    root = build_tree(input().split())  # root：二叉树根节点\n    cnt = {0: 1}  # cnt：当前祖先链的前缀和 → 次数；含空前缀\n    def dfs(node, prefix):  # node：当前节点；prefix：到父节点为止的前缀和\n        if not node: return 0\n        prefix += node.val  # prefix：更新为到当前节点为止的前缀和\n        ans = cnt.get(prefix - target, 0)  # ans：以当前节点结尾的目标路径数，随后累加子树结果\n        cnt[prefix] = cnt.get(prefix, 0) + 1\n        ans += dfs(node.left, prefix) + dfs(node.right, prefix)\n        cnt[prefix] -= 1\n        if cnt[prefix] == 0: del cnt[prefix]\n        return ans\n    print(dfs(root, 0))\n\nmain()",
+      "starterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "8\n10 5 -3 3 2 null 11 3 -2 null 1\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（复用附录）\n\ndef main():\n    target = int(input())  # target：目标路径和\n    root = build_tree(input().split())  # root：二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-236",
+      "sequence": 49,
+      "lc": 236,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树最近公共祖先",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "递归回传"
+      ],
+      "statement": [
+        "给定一棵二叉树以及其中两个节点 `p`、`q`，求它们的最近公共祖先。某节点可以是自己的祖先；答案是在同时包含 `p` 和 `q` 的所有祖先中深度最大的节点。",
+        "第一行输入 `p q` 的节点值，第二行输入二叉树层序序列，`null` 表示空节点。树中节点值互不相同，且 `p`、`q` 一定存在。",
+        "输出最近公共祖先的节点值。"
+      ],
+      "approach": "递归向上返回遇到的 p 或 q，左右子树都有返回值时当前节点就是公共祖先，否则继续传递非空结果。",
+      "inputContract": "p q；下一行层序值（值唯一，复用 find）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def lca(node, p, q):  # node：当前节点；p、q：要找公共祖先的两个节点\n    if not node or node is p or node is q: return node\n    # left、right：左右子树上报的目标节点或公共祖先\n    left, right = lca(node.left, p, q), lca(node.right, p, q)\n    return node if left and right else left or right\n\ndef main():\n    p, q = map(int, input().split())  # p、q：两个目标节点的值\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(lca(root, find(root, p), find(root, q)).val)\n\nmain()",
+      "starterCode": "# LC236 · 二叉树最近公共祖先\n# 输入：p q；下一行层序值（值唯一，复用 find）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5 1\n3 5 1 6 2 0 8 null null 7 4\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC236 · 二叉树最近公共祖先\n# 输入：p q；下一行层序值（值唯一，复用 find）\n\ndef main():\n    p, q = map(int, input().split())  # p、q：目标节点的值\n    root = build_tree(input().split())  # root：二叉树根节点\n    p, q = find(root, p), find(root, q)  # p、q：已定位的目标节点对象\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-124",
+      "sequence": 50,
+      "lc": 124,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "二叉树中的最大路径和",
+      "category": "二叉树",
+      "tags": [
+        "二叉树",
+        "树形 DP"
+      ],
+      "statement": [
+        "二叉树中的路径由若干相邻节点组成，相邻节点之间必须有父子连接，且同一节点不能在一条路径中重复出现。路径可以从任意节点开始和结束，不要求经过根节点。",
+        "给定一棵非空二叉树 `root`，节点值可能为负数，请求出任意合法非空路径的最大节点值之和。",
+        "输入为一行二叉树层序序列，`null` 表示空节点；输出一个整数表示最大路径和。"
+      ],
+      "approach": "递归求左右子树的非负单边贡献，用两侧贡献加当前值更新 ans，再向父节点返回较大一侧加当前值。",
+      "inputContract": "一行层序值（复用附录）",
+      "complexity": "O(n) / O(h)",
+      "referenceCode": "def main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    ans = -float('inf')  # ans：全局最大路径和\n    def dfs(node):  # node：当前节点；返回可向父节点延伸的单边贡献\n        nonlocal ans\n        if not node: return 0\n        # left、right：左右子树的非负单边贡献\n        left, right = max(0, dfs(node.left)), max(0, dfs(node.right))\n        ans = max(ans, node.val + left + right)\n        return node.val + max(left, right)\n    dfs(root)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "-10 9 20 null null 15 7\n",
+      "expectedOutput": "42",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-200",
+      "sequence": 51,
+      "lc": 200,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "岛屿数量",
+      "category": "图论",
+      "tags": [
+        "图论",
+        "网格 DFS"
+      ],
+      "statement": [
+        "给定一个由字符 `0` 和 `1` 组成的 `m × n` 网格，其中 `1` 表示陆地，`0` 表示水域。",
+        "上下或左右相邻的陆地属于同一座岛屿，对角相邻不算连通；网格边界之外均视为水域。",
+        "第一行输入 `m n`，随后输入 `m` 行长度为 `n` 的字符串。输出网格中的岛屿总数。"
+      ],
+      "approach": "扫描 grid 时每遇到陆地就将 ans 加一，再用 stack 向四周扩展并把整座岛改成水，避免重复计数。",
+      "inputContract": "m n；接下来 m 行 01 字符串",
+      "complexity": "O(mn) 时间 / O(mn) 最坏显式栈空间。",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(input().strip()) for _ in range(m)]  # grid：字符网格\n    ans = 0  # ans：岛屿数量\n    for r in range(m):  # r：扫描行号\n        for c in range(n):  # c：扫描列号\n            if grid[r][c] != '1': continue\n            ans += 1\n            stack = [(r, c)]  # stack：当前岛屿中待扩展的格子\n            grid[r][c] = '0'\n            while stack:\n                row, col = stack.pop()  # row、col：当前出栈格子的行列\n                for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):  # dr、dc：四方向的行列偏移\n                    nr, nc = row + dr, col + dc  # nr、nc：相邻格子的行列\n                    if 0 <= nr < m and 0 <= nc < n and grid[nr][nc] == '1':\n                        grid[nr][nc] = '0'\n                        stack.append((nr, nc))\n    print(ans)\n\nmain()",
+      "starterCode": "# LC200 · 岛屿数量\n# 输入：m n；接下来 m 行 01 字符串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 5\n11000\n11000\n00100\n00011\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC200 · 岛屿数量\n# 输入：m n；接下来 m 行 01 字符串\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(input().strip()) for _ in range(m)]  # grid：字符网格，'1' 为陆地、'0' 为水\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-994",
+      "sequence": 52,
+      "lc": 994,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "腐烂的橘子",
+      "category": "图论",
+      "tags": [
+        "图论",
+        "多源 BFS"
+      ],
+      "statement": [
+        "给定一个 `m × n` 网格，其中 `0` 表示空格，`1` 表示新鲜橘子，`2` 表示腐烂橘子。每经过一分钟，腐烂橘子会使其上、下、左、右相邻的新鲜橘子腐烂。",
+        "第一行输入 `m n`，随后输入 `m` 行空格分隔的整数。求使网格中不再存在新鲜橘子所需的最少分钟数。",
+        "若开始时没有新鲜橘子则输出 `0`；若无论经过多久仍有新鲜橘子无法腐烂，则输出 `-1`。"
+      ],
+      "approach": "将所有腐烂橘子放入 q，每层向四周腐烂新鲜橘子并计时，结束时若 fresh 仍非零就输出 -1。",
+      "inputContract": "m n；接下来 m 行空格分隔整数",
+      "complexity": "O(mn) / O(mn)",
+      "referenceCode": "from collections import deque\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：整数网格\n    # q：腐烂橘子的队列；r、c：格子的行列\n    q = deque((r, c) for r in range(m) for c in range(n) if grid[r][c] == 2)\n    fresh = sum(row.count(1) for row in grid)  # fresh：剩余新鲜橘子数；row：网格中的一行\n    ans = 0  # ans：已经过的分钟数\n    while q and fresh:\n        ans += 1\n        for _ in range(len(q)):\n            row, col = q.popleft()  # row、col：当前出队格子的行列\n            for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):  # dr、dc：四方向的行列偏移\n                nr, nc = row + dr, col + dc  # nr、nc：相邻格子的行列\n                if 0 <= nr < m and 0 <= nc < n and grid[nr][nc] == 1:\n                    grid[nr][nc] = 2\n                    fresh -= 1\n                    q.append((nr, nc))\n    print(-1 if fresh else ans)\n\nmain()",
+      "starterCode": "# LC994 · 腐烂的橘子\n# 输入：m n；接下来 m 行空格分隔整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 3\n2 1 1\n1 1 0\n0 1 1\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC994 · 腐烂的橘子\n# 输入：m n；接下来 m 行空格分隔整数\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-207",
+      "sequence": 53,
+      "lc": 207,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "课程表",
+      "category": "图论",
+      "tags": [
+        "图论",
+        "拓扑排序"
+      ],
+      "statement": [
+        "共有 `n` 门课程，编号为 `0` 到 `n-1`。每组关系 `course pre` 表示学习课程 `course` 之前必须先完成课程 `pre`。",
+        "判断是否存在一种安排，使所有课程都能完成。若可以输出小写 `true`，否则输出小写 `false`。",
+        "输入首行为 `n m`，随后 `m` 行给出先修关系 `course pre`。"
+      ],
+      "approach": "将 degree 为零的课程入队并逐门完成，同时降低后续课程的入度，完成数量 ans 等于 n 时即可学完全部课程。",
+      "inputContract": "n m；接下来 m 行 course pre",
+      "complexity": "O(V+E) / O(V+E)",
+      "referenceCode": "from collections import deque\n\ndef main():\n    n, m = map(int, input().split())  # n：课程数；m：先修关系数\n    # graph：后续课程邻接表；degree：每门课的入度\n    graph, degree = [[] for _ in range(n)], [0] * n\n    for _ in range(m):\n        a, b = map(int, input().split())  # a：待修课程；b：它的先修课程\n        graph[b].append(a)\n        degree[a] += 1\n    q = deque(i for i in range(n) if degree[i] == 0)  # q：可立即学习的课程队列；i：课程编号\n    ans = 0  # ans：已经完成的课程数\n    while q:\n        node = q.popleft()  # node：当前学习的课程编号\n        ans += 1\n        for nxt in graph[node]:  # nxt：当前课程的后续课程\n            degree[nxt] -= 1\n            if degree[nxt] == 0: q.append(nxt)\n    print(str(ans == n).lower())\n\nmain()",
+      "starterCode": "# LC207 · 课程表\n# 输入：n m；接下来 m 行 course pre\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "2 1\n1 0\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC207 · 课程表\n# 输入：n m；接下来 m 行 course pre\n\ndef main():\n    n, m = map(int, input().split())  # n：课程数；m：先修关系数\n    graph, degree = [[] for _ in range(n)], [0] * n  # graph：后续课程邻接表；degree：入度\n    for _ in range(m):\n        a, b = map(int, input().split())  # a：待修课程；b：先修课程\n        graph[b].append(a)\n        degree[a] += 1\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-208",
+      "sequence": 54,
+      "lc": 208,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "实现 Trie",
+      "category": "图论",
+      "tags": [
+        "图论",
+        "字典树"
+      ],
+      "statement": [
+        "维护一个字符串集合，并依次处理 `insert word`、`search word` 和 `startsWith prefix` 三类操作。",
+        "`insert` 将完整单词加入集合；`search` 判断完整单词是否已存在；`startsWith` 判断是否存在以给定前缀开头的单词。",
+        "输入首行为操作数 `q`，随后 `q` 行各包含一次操作。仅对查询操作逐行输出小写 `true` 或 `false`。"
+      ],
+      "approach": "用嵌套字典按字符建立路径并以 # 标记单词结尾，查词需同时检查结尾标记，查前缀只需确认路径存在。",
+      "inputContract": "q；后 q 行 insert/search/startsWith word",
+      "complexity": "单次 O(L) / 总节点数 O(ΣL)",
+      "referenceCode": "class Trie:\n    def __init__(self):\n        self.root = {}  # self.root：Trie 根节点；嵌套字典保存子节点\n    def insert(self, word):  # word：要插入的单词\n        node = self.root  # node：沿字符路径移动的当前节点\n        for ch in word: node = node.setdefault(ch, {})  # ch：当前字符；缺少子节点时创建\n        node['#'] = True\n    def find(self, word):  # word：要查找的字符路径\n        node = self.root  # node：沿字符路径移动的当前节点\n        for ch in word:  # ch：当前字符\n            if ch not in node: return None\n            node = node[ch]\n        return node\n    def search(self, word):  # word：要查询的完整单词\n        node = self.find(word)  # node：路径终点；None 表示路径不存在\n        return node is not None and '#' in node\n    def startsWith(self, word):  # word：要查询的前缀\n        return self.find(word) is not None\n\ndef main():\n    q = int(input())  # q：操作次数\n    trie = Trie()  # trie：字典树对象\n    for _ in range(q):\n        op, word = input().split()  # op：操作名；word：单词或前缀\n        if op == 'insert': trie.insert(word)\n        elif op == 'search': print(str(trie.search(word)).lower())\n        else: print(str(trie.startsWith(word)).lower())\n\nmain()",
+      "starterCode": "# LC208 · 实现 Trie\n# 输入：q；后 q 行 insert/search/startsWith word\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6\ninsert apple\nsearch apple\nsearch app\nstartsWith app\ninsert app\nsearch app\n",
+      "expectedOutput": "true\nfalse\ntrue\ntrue",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC208 · 实现 Trie\n# 输入：q；后 q 行 insert/search/startsWith word\n\ndef main():\n    q = int(input())  # q：操作次数\n    ops = [input().split() for _ in range(q)]  # ops：已按空格拆分的操作名和参数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-46",
+      "sequence": 55,
+      "lc": 46,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "全排列",
+      "category": "回溯",
+      "tags": [
+        "回溯",
+        "used"
+      ],
+      "statement": [
+        "给定由 `n` 个互不相同整数组成的数组，请输出这些整数的所有全排列。",
+        "每种排列占一行，元素之间以空格分隔；不得遗漏或重复排列，排列之间的输出顺序不限。",
+        "输入首行为 `n`，第二行为这 `n` 个整数。"
+      ],
+      "approach": "回溯时把 used 中未使用的元素加入 path，长度达到 n 就保存排列，返回时撤销选择和使用标记。",
+      "inputContract": "n；下一行 n 个互异整数",
+      "complexity": "O(n·n!) / O(n)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    # ans：所有排列；path：当前排列；used：各下标是否已用\n    ans, path, used = [], [], [False] * n\n    def dfs():\n        if len(path) == n:\n            ans.append(path[:])\n            return\n        for i, x in enumerate(nums):  # i：当前下标；x：当前元素\n            if used[i]: continue\n            used[i] = True\n            path.append(x)\n            dfs()\n            path.pop()\n            used[i] = False\n    dfs()\n    for row in ans: print(*row)  # row：一组答案\n\nmain()",
+      "starterCode": "# LC46 · 全排列\n# 输入：n；下一行 n 个互异整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3\n1 2 3\n",
+      "expectedOutput": "1 2 3\n1 3 2\n2 1 3\n2 3 1\n3 1 2\n3 2 1",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC46 · 全排列\n# 输入：n；下一行 n 个互异整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-78",
+      "sequence": 56,
+      "lc": 78,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "子集",
+      "category": "回溯",
+      "tags": [
+        "回溯",
+        "start"
+      ],
+      "statement": [
+        "给定由 `n` 个互不相同整数组成的数组，请输出它的幂集，即所有可能的子集。",
+        "每个子集占一行，非空子集中的元素按原数组中的相对顺序输出并以空格分隔，空集输出为 `[]`。",
+        "输入首行为 `n`，第二行为这 `n` 个整数；每个子集只能输出一次。"
+      ],
+      "approach": "每次递归先保存当前 path，再从 start 起依次选择元素并递归到下一个下标，回溯得到全部子集。",
+      "inputContract": "n；下一行 n 个互异整数",
+      "complexity": "O(n·2^n) / O(n)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    ans, path = [], []  # ans：所有答案；path：当前选择的路径\n    def dfs(start):  # start：下一次可选元素的起始下标\n        ans.append(path[:])\n        for i in range(start, n):  # i：本轮尝试选取的元素下标\n            path.append(nums[i])\n            dfs(i + 1)\n            path.pop()\n    dfs(0)\n    for row in ans: print(*row) if row else print('[]')  # row：一个子集；空集输出 []\n\nmain()",
+      "starterCode": "# LC78 · 子集\n# 输入：n；下一行 n 个互异整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "2\n1 2\n",
+      "expectedOutput": "[]\n1\n1 2\n2",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC78 · 子集\n# 输入：n；下一行 n 个互异整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-17",
+      "lc": 17,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "电话号码的字母组合",
+      "category": "回溯",
+      "tags": [
+        "回溯"
+      ],
+      "statement": [
+        "数字 2 到 9 对应传统电话键盘上的字母，输出数字串能表示的所有字母组合。",
+        "输入一行数字串，每行输出一个组合，顺序不限；空串不输出组合。"
+      ],
+      "approach": "按 digits 的位置递归枚举对应字母加入 path，填满所有位置就保存组合，返回时撤销本次选择。",
+      "inputContract": "一行仅含 2 到 9 的数字串，也可为空行",
+      "complexity": "时间 O(n·4ⁿ)，辅助空间 O(n)（不计结果）。",
+      "referenceCode": "def main():\n    digits = input().strip()  # digits：输入数字串\n    letters = ['', '', 'abc', 'def', 'ghi', 'jkl', 'mno', 'pqrs', 'tuv', 'wxyz']  # letters：数字对应的字母\n    ans, path = [], []  # ans：所有组合；path：当前字母路径\n    def dfs(i):  # i：当前要处理的数字下标\n        if i == len(digits):\n            ans.append(''.join(path))\n            return\n        for ch in letters[int(digits[i])]:  # ch：当前候选字母\n            path.append(ch)\n            dfs(i + 1)\n            path.pop()\n    if digits: dfs(0)\n    for row in ans: print(row)  # row：一个字母组合\n\nmain()",
+      "starterCode": "# LC17 · 电话号码的字母组合\n# 输入：一行仅含 2 到 9 的数字串，也可为空行\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC17 · 电话号码的字母组合\n# 输入：一行仅含 2 到 9 的数字串，也可为空行\n\ndef main():\n    digits = input().strip()  # digits：输入数字串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "23\n",
+      "expectedOutput": "ad\nae\naf\nbd\nbe\nbf\ncd\nce\ncf",
+      "normalizer": "sort-lines",
+      "sequence": 57
+    },
+    {
+      "id": "lc-39",
+      "sequence": 58,
+      "lc": 39,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "组合总和",
+      "category": "回溯",
+      "tags": [
+        "回溯"
+      ],
+      "statement": [
+        "给定一组互不相同的正整数 `candidates` 和目标值 `target`，找出所有元素之和等于 `target` 的组合。",
+        "同一个候选数可以被选取任意次，但不能输出重复组合。每个组合占一行，元素按非递减顺序排列并以空格分隔；组合之间的顺序不限。",
+        "输入首行为 `n target`，第二行为 `n` 个候选正整数。"
+      ],
+      "approach": "排序后从 start 起回溯选数并扣减 remain，递归保留当前下标以允许重复选取，余量为零时保存组合。",
+      "inputContract": "n target；下一行候选正整数",
+      "complexity": "指数级 / O(target/min(a)) 递归深度",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：可重复选取的候选正整数\n    nums.sort()\n    ans, path = [], []  # ans：所有答案；path：当前选择的路径\n    def dfs(start, remain):  # start：可选起始下标；remain：距离目标还差的和\n        if remain == 0:\n            ans.append(path[:])\n            return\n        for i in range(start, n):  # i：本轮尝试选取的元素下标\n            if nums[i] > remain: break\n            path.append(nums[i])\n            dfs(i, remain - nums[i])\n            path.pop()\n    dfs(0, target)\n    for row in ans: print(*row)  # row：一组答案\n\nmain()",
+      "starterCode": "# LC39 · 组合总和\n# 输入：n target；下一行候选正整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "4 7\n2 3 6 7\n",
+      "expectedOutput": "2 2 3\n7",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC39 · 组合总和\n# 输入：n target；下一行候选正整数\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-22",
+      "lc": 22,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "括号生成",
+      "category": "回溯",
+      "tags": [
+        "回溯"
+      ],
+      "statement": [
+        "生成由 `n` 对圆括号组成的所有合法括号串，任意前缀的右括号数不能超过左括号数。",
+        "输入正整数 `n`，每行输出一个合法括号串，顺序不限。"
+      ],
+      "approach": "回溯维护 left、right 两种括号的已用数量，左括号未用完就可添加，右括号少于左括号时才可添加。",
+      "inputContract": "正整数 n，表示括号对数",
+      "complexity": "时间 O(n·Cₙ)，辅助空间 O(n)，Cₙ 为合法括号串数量。",
+      "referenceCode": "def main():\n    n = int(input())  # n：括号对数\n    ans, path = [], []  # ans：所有合法括号串；path：当前字符路径\n    def dfs(left, right):  # left、right：已使用的左右括号数\n        if right == n:\n            ans.append(''.join(path))\n            return\n        if left < n:\n            path.append('(')\n            dfs(left + 1, right)\n            path.pop()\n        if right < left:\n            path.append(')')\n            dfs(left, right + 1)\n            path.pop()\n    dfs(0, 0)\n    for row in ans: print(row)  # row：一个合法括号串\n\nmain()",
+      "starterCode": "# LC22 · 括号生成\n# 输入：正整数 n，表示括号对数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC22 · 括号生成\n# 输入：正整数 n，表示括号对数\n\ndef main():\n    n = int(input())  # n：括号对数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3\n",
+      "expectedOutput": "((()))\n(()())\n(())()\n()(())\n()()()",
+      "normalizer": "sort-lines",
+      "sequence": 59
+    },
+    {
+      "id": "lc-79",
+      "sequence": 60,
+      "lc": 79,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "单词搜索",
+      "category": "回溯",
+      "tags": [
+        "回溯",
+        "网格 DFS + 回溯"
+      ],
+      "statement": [
+        "给定一个 `m × n` 的字符网格 `board` 和字符串 `word`，判断能否在网格中依次找到 `word` 的全部字符。",
+        "相邻字符必须位于水平或垂直相邻的单元格中，同一个单元格在一条匹配路径中不能重复使用。",
+        "输入首行为 `m n`，随后 `m` 行给出网格，最后一行给出 `word`。存在匹配时输出小写 `true`，否则输出小写 `false`。"
+      ],
+      "approach": "从每个格子出发向四周递归匹配 word，临时清空已用格子以防重复访问，回溯时恢复字符。",
+      "inputContract": "m n；m 行字符；最后一行 word",
+      "complexity": "O(mn·3^L) / O(L)",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(input().strip()) for _ in range(m)]  # grid：字符网格\n    word = input().strip()  # word：待匹配的单词\n    def dfs(row, col, i):  # row、col：当前格子的行列；i：待匹配字符下标\n        if not (0 <= row < m and 0 <= col < n) or grid[row][col] != word[i]: return False\n        if i == len(word) - 1: return True\n        ch, grid[row][col] = grid[row][col], ''  # ch：暂存当前字符，回溯时恢复\n        ans = any(dfs(row + dr, col + dc, i + 1)  # ans：是否有方向能匹配后续字符\n                  for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)))  # dr、dc：四方向的行列偏移\n        grid[row][col] = ch\n        return ans\n    # r、c：尝试作为单词起点的行列\n    print(str(any(dfs(r, c, 0) for r in range(m) for c in range(n))).lower())\n\nmain()",
+      "starterCode": "# LC79 · 单词搜索\n# 输入：m n；m 行字符；最后一行 word\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "3 4\nABCE\nSFCS\nADEE\nABCCED\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC79 · 单词搜索\n# 输入：m n；m 行字符；最后一行 word\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(input().strip()) for _ in range(m)]  # grid：字符网格\n    word = input().strip()  # word：待查找的单词\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-131",
+      "sequence": 61,
+      "lc": 131,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "分割回文串",
+      "category": "回溯",
+      "tags": [
+        "回溯",
+        "切割型回溯"
+      ],
+      "statement": [
+        "给定字符串 `s`，请输出将它切分为若干非空子串的所有方案，并保证每个子串都是回文串。",
+        "每种切分占一行，相邻子串之间使用 `|` 分隔；不得遗漏或重复方案，方案之间的输出顺序不限。",
+        "输入为一行字符串 `s`。"
+      ],
+      "approach": "从 start 起枚举子串，只有回文段才加入 path 并递归切分剩余部分，到达字符串末尾时保存方案。",
+      "inputContract": "一行字符串 s",
+      "complexity": "指数级 / O(n) 递归辅助空间",
+      "referenceCode": "def main():\n    s = input().strip()  # s：待切割的字符串\n    ans, path = [], []  # ans：所有答案；path：当前选择的路径\n    def dfs(start):  # start：下一段回文串的起始下标\n        if start == len(s):\n            ans.append(path[:])\n            return\n        for i in range(start, len(s)):  # i：当前段的结束下标（包含）\n            part = s[start:i + 1]  # part：本次尝试切出的子串\n            if part != part[::-1]: continue\n            path.append(part)\n            dfs(i + 1)\n            path.pop()\n    dfs(0)\n    for row in ans: print('|'.join(row))  # row：一种回文分割方案\n\nmain()",
+      "starterCode": "# LC131 · 分割回文串\n# 输入：一行字符串 s\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "aab\n",
+      "expectedOutput": "a|a|b\naa|b",
+      "normalizer": "sort-lines",
+      "inputStarterCode": "# LC131 · 分割回文串\n# 输入：一行字符串 s\n\ndef main():\n    s = input().strip()  # s：输入字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-51",
+      "lc": 51,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "N 皇后",
+      "category": "回溯",
+      "tags": [
+        "回溯"
+      ],
+      "statement": [
+        "在 `n × n` 棋盘放置 n 个皇后，任意两个皇后不能同列、同行或处于同一对角线。",
+        "输入正整数 `n`，每个解输出一行，用 `|` 分隔棋盘各行，`Q` 表示皇后、`.` 表示空位，解的顺序不限，无解无输出。"
+      ],
+      "approach": "逐行回溯选择未占用的列，用 cols、diag1、diag2 排除列和两条对角线冲突，放满 n 行就保存棋盘。",
+      "inputContract": "正整数 n；每个解用 | 连接棋盘各行",
+      "complexity": "搜索 O(n·n!) 上界，辅助空间 O(n²)（不计结果）。",
+      "referenceCode": "def main():\n    n = int(input())  # n：棋盘边长，也是皇后数量\n    ans, path = [], []  # ans：所有棋盘；path：当前已放置的棋盘行\n    cols, diag1, diag2 = set(), set(), set()  # cols：占用列；diag1、diag2：两种对角线编号\n    def dfs(row):  # row：当前要放皇后的行号\n        if row == n:\n            ans.append('|'.join(path))\n            return\n        for col in range(n):  # col：尝试放皇后的列号\n            if col in cols or row - col in diag1 or row + col in diag2: continue\n            cols.add(col)\n            diag1.add(row - col)\n            diag2.add(row + col)\n            path.append('.' * col + 'Q' + '.' * (n - col - 1))\n            dfs(row + 1)\n            path.pop()\n            cols.remove(col)\n            diag1.remove(row - col)\n            diag2.remove(row + col)\n    dfs(0)\n    for board in ans: print(board)  # board：一种棋盘布局\n\nmain()",
+      "starterCode": "# LC51 · N 皇后\n# 输入：正整数 n；每个解用 | 连接棋盘各行\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC51 · N 皇后\n# 输入：正整数 n；每个解用 | 连接棋盘各行\n\ndef main():\n    n = int(input())  # n：棋盘边长，也是皇后数量\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n",
+      "expectedOutput": ".Q..|...Q|Q...|..Q.\n..Q.|Q...|...Q|.Q..",
+      "normalizer": "sort-lines",
+      "sequence": 62
+    },
+    {
+      "id": "lc-35",
+      "lc": 35,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "搜索插入位置",
+      "category": "二分查找",
+      "tags": [
+        "二分查找"
+      ],
+      "statement": [
+        "在升序且无重复元素的数组中查找 target，存在时返回下标，否则返回保持有序的插入位置。",
+        "第一行输入 `n target`，第二行输入数组，输出零基下标。"
+      ],
+      "approach": "在左闭右开的区间中二分查找第一个不小于 target 的位置，最终 left 就是目标或插入下标。",
+      "inputContract": "n target；下一行 n 个升序整数",
+      "complexity": "时间 O(log n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：升序数组\n    left, right = 0, n  # left、right：半开搜索区间 [left,right)\n    while left < right:\n        mid = (left + right) // 2  # mid：当前区间的中点下标\n        if nums[mid] < target: left = mid + 1\n        else: right = mid\n    print(left)\n\nmain()",
+      "starterCode": "# LC35 · 搜索插入位置\n# 输入：n target；下一行 n 个升序整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC35 · 搜索插入位置\n# 输入：n target；下一行 n 个升序整数\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：升序数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4 4\n1 3 5 7\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 63
+    },
+    {
+      "id": "lc-74",
+      "lc": 74,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "搜索二维矩阵",
+      "category": "二分查找",
+      "tags": [
+        "二分查找"
+      ],
+      "statement": [
+        "矩阵每行递增，且每一行首元素都大于前一行末元素，判断 target 是否存在。",
+        "第一行输入 `m n target`，随后输入矩阵，输出小写 `true` 或 `false`。"
+      ],
+      "approach": "将矩阵看成有序的一维数组，用 mid // n 和 mid % n 映射行列，二分定位第一个不小于 target 的值。",
+      "inputContract": "m n target；随后 m 行矩阵",
+      "complexity": "时间 O(log(mn))，额外空间 O(1)。",
+      "referenceCode": "def main():\n    m, n, target = map(int, input().split())  # m、n：行列数；target：目标值\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n    left, right = 0, m * n  # left、right：展平后的半开搜索区间\n    while left < right:\n        mid = (left + right) // 2  # mid：展平后的中点下标\n        if grid[mid // n][mid % n] < target: left = mid + 1\n        else: right = mid\n    print(str(left < m * n and grid[left // n][left % n] == target).lower())\n\nmain()",
+      "starterCode": "# LC74 · 搜索二维矩阵\n# 输入：m n target；随后 m 行矩阵\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC74 · 搜索二维矩阵\n# 输入：m n target；随后 m 行矩阵\n\ndef main():\n    m, n, target = map(int, input().split())  # m、n：行列数；target：目标值\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "2 3 5\n1 3 5\n7 9 11\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 64
+    },
+    {
+      "id": "lc-34",
+      "sequence": 65,
+      "lc": 34,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "查找元素首尾位置",
+      "category": "二分查找",
+      "tags": [
+        "二分查找",
+        "二分边界"
+      ],
+      "statement": [
+        "给定一个按非递减顺序排列的整数数组和目标值 `target`，确定 `target` 在数组中第一次与最后一次出现的位置。",
+        "输出两个从 `0` 开始的下标；若数组中没有 `target`，输出 `-1 -1`。",
+        "输入首行为 `n target`，第二行为长度为 `n` 的升序数组。"
+      ],
+      "approach": "用 lower_bound 分别找第一个不小于 target 和 target + 1 的位置，得到首尾下标，区间为空则输出 -1、-1。",
+      "inputContract": "n target；下一行升序数组",
+      "complexity": "O(logn) / O(1)",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n    def lower_bound(target):  # target：本次二分要找的下界值\n        left, right = 0, n  # left、right：半开搜索区间 [left,right)\n        while left < right:\n            mid = (left + right) // 2  # mid：当前区间的中点下标\n            if nums[mid] < target: left = mid + 1\n            else: right = mid\n        return left\n    # left、right：目标值首次、末次出现的下标\n    left, right = lower_bound(target), lower_bound(target + 1) - 1\n    print(left, right) if left <= right else print(-1, -1)\n\nmain()",
+      "starterCode": "# LC34 · 查找元素首尾位置\n# 输入：n target；下一行升序数组\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6 8\n5 7 7 8 8 10\n",
+      "expectedOutput": "3 4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC34 · 查找元素首尾位置\n# 输入：n target；下一行升序数组\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-33",
+      "sequence": 66,
+      "lc": 33,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "搜索旋转排序数组",
+      "category": "二分查找",
+      "tags": [
+        "二分查找",
+        "二分"
+      ],
+      "statement": [
+        "一个元素互不相同的升序数组在某个未知位置发生过一次旋转。给定该数组和整数 `target`，查找 `target` 所在的位置。",
+        "找到时输出其从 `0` 开始的下标；数组中不存在 `target` 时输出 `-1`。",
+        "输入首行为 `n target`，第二行为旋转后的 `n` 个整数。"
+      ],
+      "approach": "每轮二分先判断 mid 哪一侧有序，再按 target 是否落在该有序区间内缩小 left、right，直到找到目标或区间为空。",
+      "inputContract": "n target；下一行 n 个互异整数",
+      "complexity": "O(logn) / O(1)",
+      "referenceCode": "def main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n    left, right = 0, n - 1  # left、right：搜索区间的左右端点（均包含）\n    while left <= right:\n        mid = (left + right) // 2  # mid：当前区间的中点下标\n        if nums[mid] == target:\n            print(mid)\n            return\n        if nums[left] <= nums[mid]:\n            if nums[left] <= target < nums[mid]: right = mid - 1\n            else: left = mid + 1\n        else:\n            if nums[mid] < target <= nums[right]: left = mid + 1\n            else: right = mid - 1\n    print(-1)\n\nmain()",
+      "starterCode": "# LC33 · 搜索旋转排序数组\n# 输入：n target；下一行 n 个互异整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "7 0\n4 5 6 7 0 1 2\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC33 · 搜索旋转排序数组\n# 输入：n target；下一行 n 个互异整数\n\ndef main():\n    n, target = map(int, input().split())  # n：元素个数；target：目标值\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-153",
+      "sequence": 67,
+      "lc": 153,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "寻找旋转数组最小值",
+      "category": "二分查找",
+      "tags": [
+        "二分查找",
+        "二分"
+      ],
+      "statement": [
+        "给定一个元素互不相同、原本严格升序但经过旋转的整数数组，请找出其中的最小元素。",
+        "输入首行为数组长度 `n`，第二行为旋转后的 `n` 个整数；输出最小元素的值。"
+      ],
+      "approach": "二分比较 nums[mid] 与 nums[right]，前者更大就排除左半段，否则保留 mid 并缩小右边界，直到定位最小值。",
+      "inputContract": "n；下一行互异旋转升序数组",
+      "complexity": "O(logn) / O(1)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    left, right = 0, n - 1  # left、right：搜索区间的左右端点（均包含）\n    while left < right:\n        mid = (left + right) // 2  # mid：当前区间的中点下标\n        if nums[mid] > nums[right]: left = mid + 1\n        else: right = mid\n    print(nums[left])\n\nmain()",
+      "starterCode": "# LC153 · 寻找旋转数组最小值\n# 输入：n；下一行互异旋转升序数组\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\n3 4 5 1 2\n",
+      "expectedOutput": "1",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC153 · 寻找旋转数组最小值\n# 输入：n；下一行互异旋转升序数组\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-4",
+      "lc": 4,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "寻找两个正序数组的中位数",
+      "category": "二分查找",
+      "tags": [
+        "二分查找"
+      ],
+      "statement": [
+        "给定两个升序数组，求合并后的中位数，要求对数时间，两个数组不能同时为空。",
+        "第一行输入 `n m`，后两行分别输入两个数组，空数组对应空行，输出中位数。"
+      ],
+      "approach": "在较短数组中二分划分位置，使两数组左半部分的最大值不超过右半部分的最小值，再按总长度奇偶取中位数。",
+      "inputContract": "n m；后两行分别为两个升序数组",
+      "complexity": "时间 O(log(min(n,m)+1))，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n, m = map(int, input().split())  # n、m：两个数组的长度\n    a = list(map(int, input().split()))  # a：第一个升序数组\n    b = list(map(int, input().split()))  # b：第二个升序数组\n    if n > m: a, b, n, m = b, a, m, n\n    left, right = 0, n  # left、right：较短数组中划分位置的范围\n    half = (n + m + 1) // 2  # half：左半部分应有的元素数\n    while left <= right:\n        i = (left + right) // 2  # i：a 放入左半部分的元素数\n        j = half - i  # j：b 放入左半部分的元素数\n        a_left = a[i - 1] if i else -float('inf')  # a_left：a 的左边界值\n        a_right = a[i] if i < n else float('inf')  # a_right：a 的右边界值\n        b_left = b[j - 1] if j else -float('inf')  # b_left：b 的左边界值\n        b_right = b[j] if j < m else float('inf')  # b_right：b 的右边界值\n        if a_left > b_right: right = i - 1\n        elif b_left > a_right: left = i + 1\n        else:\n            ans = max(a_left, b_left)  # ans：左半部分最大值\n            if (n + m) % 2 == 0: ans = (ans + min(a_right, b_right)) / 2\n            print(ans)\n            return\n\nmain()",
+      "starterCode": "# LC4 · 寻找两个正序数组的中位数\n# 输入：n m；后两行分别为两个升序数组\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC4 · 寻找两个正序数组的中位数\n# 输入：n m；后两行分别为两个升序数组\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两个数组的长度\n    a = list(map(int, input().split()))  # a：第一个升序数组\n    b = list(map(int, input().split()))  # b：第二个升序数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "2 2\n1 4\n2 3\n",
+      "expectedOutput": "2.5",
+      "normalizer": "sort-numbers",
+      "sequence": 68
+    },
+    {
+      "id": "lc-20",
+      "lc": 20,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "有效的括号",
+      "category": "栈",
+      "tags": [
+        "栈"
+      ],
+      "statement": [
+        "字符串只含三种括号 ()、[]、{}，判断每个右括号是否与最近未匹配的同类左括号配对。",
+        "输入一行括号串，输出小写 `true` 或 `false`，空串视为有效。"
+      ],
+      "approach": "用 stack 保存尚未匹配的左括号，遇到右括号就核对并弹出栈顶，最后栈为空才有效。",
+      "inputContract": "一行括号串",
+      "complexity": "时间 O(n)，空间 O(n)。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：输入括号串\n    stack = []  # stack：未匹配的左括号\n    pairs = {')': '(', ']': '[', '}': '{'}  # pairs：右括号 → 对应左括号\n    for ch in s:  # ch：当前括号\n        if ch not in pairs: stack.append(ch)\n        elif not stack or stack.pop() != pairs[ch]:\n            print('false')\n            return\n    print(str(not stack).lower())\n\nmain()",
+      "starterCode": "# LC20 · 有效的括号\n# 输入：一行括号串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC20 · 有效的括号\n# 输入：一行括号串\n\ndef main():\n    s = input().strip()  # s：输入括号串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "([]{})\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 69
+    },
+    {
+      "id": "lc-155",
+      "lc": 155,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最小栈",
+      "category": "栈",
+      "tags": [
+        "栈"
+      ],
+      "statement": [
+        "实现支持 push、pop、top、getMin 的栈，四种操作都要求常数时间。",
+        "第一行输入操作数 q，随后每行一个操作，push 后跟整数；每次 top 和 getMin 输出一行结果，保证查询和弹出时栈非空。"
+      ],
+      "approach": "栈中每项同时保存当前值和截至此处的最小值，使 top 与 getMin 都只需读取栈顶。",
+      "inputContract": "q；随后 q 行 push x / pop / top / getMin",
+      "complexity": "每次操作 O(1)，总空间 O(q)。",
+      "referenceCode": "class MinStack:\n    def __init__(self):\n        self.stack = []  # stack：每项为 (当前值, 到当前为止的最小值)\n    def push(self, x):  # x：新入栈元素\n        self.stack.append((x, min(x, self.getMin()) if self.stack else x))\n    def pop(self):\n        self.stack.pop()\n    def top(self):\n        return self.stack[-1][0]\n    def getMin(self):\n        return self.stack[-1][1]\n\ndef main():\n    q = int(input())  # q：操作次数\n    ops = [input().split() for _ in range(q)]  # ops：已经拆分好的操作与参数\n    obj = MinStack()  # obj：最小栈对象\n    for op, *args in ops:  # op：操作名；args：操作参数\n        if op == 'push': obj.push(int(args[0]))\n        elif op == 'pop': obj.pop()\n        elif op == 'top': print(obj.top())\n        else: print(obj.getMin())\n\nmain()",
+      "starterCode": "# LC155 · 最小栈\n# 输入：q；随后 q 行 push x / pop / top / getMin\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC155 · 最小栈\n# 输入：q；随后 q 行 push x / pop / top / getMin\n\ndef main():\n    q = int(input())  # q：操作次数\n    ops = [input().split() for _ in range(q)]  # ops：已经拆分好的操作与参数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "7\npush 3\npush 1\ngetMin\npush 2\ntop\npop\ngetMin\n",
+      "expectedOutput": "1\n2\n1",
+      "normalizer": "trim",
+      "sequence": 70
+    },
+    {
+      "id": "lc-394",
+      "lc": 394,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "字符串解码",
+      "category": "栈",
+      "tags": [
+        "栈"
+      ],
+      "statement": [
+        "将形如 `k[内容]` 的编码展开为重复 k 次的内容，方括号可以嵌套，编码保证合法。",
+        "输入一行编码字符串，其中数字只表示重复次数，输出解码结果。"
+      ],
+      "approach": "遇到左括号就把已有字符串和重复次数入栈，遇到右括号就弹栈并拼接重复后的当前字符串。",
+      "inputContract": "一行合法编码串",
+      "complexity": "时间与空间 O(n·L) 保守上界，n 为编码长度、L 为解码长度。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：编码字符串\n    stack, cur, num = [], '', 0  # stack：外层字符串与次数；cur：当前字符串；num：当前重复次数\n    for ch in s:  # ch：当前字符\n        if ch.isdigit(): num = num * 10 + int(ch)\n        elif ch == '[':\n            stack.append((cur, num))\n            cur, num = '', 0\n        elif ch == ']':\n            prev, count = stack.pop()  # prev：外层已生成字符串；count：本层重复次数\n            cur = prev + cur * count\n        else: cur += ch\n    print(cur)\n\nmain()",
+      "starterCode": "# LC394 · 字符串解码\n# 输入：一行合法编码串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC394 · 字符串解码\n# 输入：一行合法编码串\n\ndef main():\n    s = input().strip()  # s：编码字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "2[a3[b]]\n",
+      "expectedOutput": "abbbabbb",
+      "normalizer": "trim",
+      "sequence": 71
+    },
+    {
+      "id": "lc-739",
+      "lc": 739,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "每日温度",
+      "category": "栈",
+      "tags": [
+        "栈"
+      ],
+      "statement": [
+        "对每天的温度，求还需等待多少天才能遇到严格更高的温度，如果之后没有更高温度则填 0。",
+        "第一行输入天数 n，第二行输入温度数组，按日期顺序输出等待天数。"
+      ],
+      "approach": "用 stack 保存尚未等到更高温度的下标，遇到更高温度就弹栈并用下标差填写等待天数。",
+      "inputContract": "n；下一行 n 个温度",
+      "complexity": "时间 O(n)，空间 O(n)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    stack, ans = [], [0] * n  # stack：温度非递增的待处理下标；ans：等待天数\n    for i, x in enumerate(nums):  # i：当前日期下标；x：当前温度\n        while stack and nums[stack[-1]] < x:\n            j = stack.pop()  # j：现在等到了更高温度的日期\n            ans[j] = i - j\n        stack.append(i)\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC739 · 每日温度\n# 输入：n；下一行 n 个温度\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC739 · 每日温度\n# 输入：n；下一行 n 个温度\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n30 40 35 50 45\n",
+      "expectedOutput": "1 2 1 0 0",
+      "normalizer": "trim",
+      "sequence": 72
+    },
+    {
+      "id": "lc-84",
+      "sequence": 73,
+      "lc": 84,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "柱状图中最大的矩形",
+      "category": "栈",
+      "tags": [
+        "栈",
+        "单调递增栈"
+      ],
+      "statement": [
+        "给定一组宽度均为 `1`、彼此相邻的柱子，第 `i` 根柱子的高度为 `heights[i]`。",
+        "求能够完全包含在该柱状图中的轴对齐矩形的最大面积，并输出该面积。",
+        "输入首行为柱子数量 `n`，第二行为 `n` 个非负高度。"
+      ],
+      "approach": "在 nums 两端补零并用 stack 保存高度非递减的下标，遇到更矮柱就弹栈，以左右矮边界间的宽度计算面积并更新 ans。",
+      "inputContract": "n；下一行 n 个高度",
+      "complexity": "O(n) / O(n)",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：各柱子的高度\n    nums = [0] + nums + [0]\n    stack, ans = [0], 0  # stack：高度递增的下标栈；ans：最大矩形面积\n    for right in range(1, n + 2):  # right：当前柱下标，弹栈时作为右侧矮边界\n        while nums[stack[-1]] > nums[right]:\n            height = nums[stack.pop()]  # height：本次结算矩形的高度\n            ans = max(ans, height * (right - stack[-1] - 1))\n        stack.append(right)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC84 · 柱状图中最大的矩形\n# 输入：n；下一行 n 个高度\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6\n2 1 5 6 2 3\n",
+      "expectedOutput": "10",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC84 · 柱状图中最大的矩形\n# 输入：n；下一行 n 个高度\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-215",
+      "sequence": 74,
+      "lc": 215,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "数组中的第 K 个最大元素",
+      "category": "堆",
+      "tags": [
+        "堆",
+        "Top-K 最小堆"
+      ],
+      "statement": [
+        "给定整数数组 `nums` 和整数 `k`，找出数组按从大到小排列后位于第 `k` 个位置的元素。",
+        "重复元素分别参与排名。例如最大元素对应 `k=1`。",
+        "输入首行为 `n k`，第二行为 `n` 个整数；输出第 `k` 大元素的值。"
+      ],
+      "approach": "遍历 nums 时将元素压入最小堆 heap，超过 k 个就弹出最小值，最终堆顶就是第 k 大元素。",
+      "inputContract": "n k；下一行 n 个整数",
+      "complexity": "O(nlogk) / O(k)",
+      "referenceCode": "from heapq import heappush, heappop\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：要找的第 k 大\n    nums = list(map(int, input().split()))  # nums：输入数组\n    heap = []  # heap：保存当前最大的 k 个数的最小堆\n    for x in nums:  # x：当前元素\n        heappush(heap, x)\n        if len(heap) > k: heappop(heap)\n    print(heap[0])\n\nmain()",
+      "starterCode": "# LC215 · 数组中的第 K 个最大元素\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6 2\n3 2 1 5 6 4\n",
+      "expectedOutput": "5",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC215 · 数组中的第 K 个最大元素\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：要找的第 k 大\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-347",
+      "sequence": 75,
+      "lc": 347,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "前 K 个高频元素",
+      "category": "堆",
+      "tags": [
+        "堆",
+        "哈希 + Top-K 堆"
+      ],
+      "statement": [
+        "给定整数数组 `nums` 和整数 `k`，找出出现频率最高的 `k` 个不同元素。",
+        "在一行中输出这 `k` 个元素并以空格分隔，元素之间的顺序不限；题目保证答案可唯一确定。",
+        "输入首行为 `n k`，第二行为 `n` 个整数。"
+      ],
+      "approach": "用 cnt 统计频次，将“频次、数值”放入容量为 k 的最小堆 heap，最终输出堆中保留的高频元素。",
+      "inputContract": "n k；下一行 n 个整数",
+      "complexity": "O(nlogk) / O(n)",
+      "referenceCode": "from collections import Counter\nfrom heapq import heappush, heappop\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：要保留的不同元素数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    cnt, heap = Counter(nums), []  # cnt：数值 → 频次；heap：保留频次最高 k 项的最小堆\n    # value：数值；freq：频次；x：(频次, 数值) 二元组\n    for x in ((freq, value) for value, freq in cnt.items()):\n        heappush(heap, x)\n        if len(heap) > k: heappop(heap)\n    print(*(value for freq, value in heap))\n\nmain()",
+      "starterCode": "# LC347 · 前 K 个高频元素\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "6 2\n1 1 1 2 2 3\n",
+      "expectedOutput": "1 2",
+      "normalizer": "sort-numbers",
+      "inputStarterCode": "# LC347 · 前 K 个高频元素\n# 输入：n k；下一行 n 个整数\n\ndef main():\n    n, k = map(int, input().split())  # n：元素个数；k：要保留的高频元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-295",
+      "sequence": 76,
+      "lc": 295,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "数据流的中位数",
+      "category": "堆",
+      "tags": [
+        "堆",
+        "双堆"
+      ],
+      "statement": [
+        "维护一个不断接收整数的数据流，并处理 `add x` 与 `median` 两类操作。`add x` 将整数 `x` 加入数据流，`median` 查询当前全部元素的中位数。",
+        "元素个数为奇数时，中位数是排序后居中的元素；为偶数时，中位数是中间两个元素的算术平均值。",
+        "输入首行为操作数 `q`，随后 `q` 行给出操作。对每次 `median` 查询逐行输出结果，并保证查询时数据流非空。"
+      ],
+      "approach": "用 small、large 两个堆分别保存较小和较大的一半，并让 small 最多多一个元素，再由堆顶计算中位数。",
+      "inputContract": "q；后 q 行 add x / median",
+      "complexity": "add O(logn)，median O(1) / O(n)",
+      "referenceCode": "from heapq import heappush, heappop, heappushpop\n\nclass MedianFinder:\n    def __init__(self):\n        self.small, self.large = [], []  # small：较小一半（取负数存堆）；large：较大一半\n    def addNum(self, x):  # x：新加入的数据\n        heappush(self.large, -heappushpop(self.small, -x))\n        if len(self.large) > len(self.small):\n            heappush(self.small, -heappop(self.large))\n    def findMedian(self):\n        if len(self.small) > len(self.large): return -self.small[0]\n        return (self.large[0] - self.small[0]) / 2\n\ndef main():\n    q = int(input())  # q：操作次数\n    obj = MedianFinder()  # obj：维护数据流中位数的对象\n    for _ in range(q):\n        op, *args = input().split()  # op：操作名；args：操作参数\n        if op == 'add': obj.addNum(int(args[0]))\n        else: print(obj.findMedian())\n\nmain()",
+      "starterCode": "# LC295 · 数据流的中位数\n# 输入：q；后 q 行 add x / median\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "sampleInput": "5\nadd 1\nadd 2\nmedian\nadd 3\nmedian\n",
+      "expectedOutput": "1.5\n2",
+      "normalizer": "trim",
+      "inputStarterCode": "# LC295 · 数据流的中位数\n# 输入：q；后 q 行 add x / median\n\ndef main():\n    q = int(input())  # q：操作次数\n    ops = [input().split() for _ in range(q)]  # ops：已按空格拆分的操作名和参数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+    },
+    {
+      "id": "lc-121",
+      "lc": 121,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "买卖股票的最佳时机",
+      "category": "贪心算法",
+      "tags": [
+        "贪心算法"
+      ],
+      "statement": [
+        "数组表示每天的股价，最多买入一次并在之后卖出一次，求最大利润，不交易时利润为 0。",
+        "第一行输入天数 n，第二行输入股价，输出最大利润。"
+      ],
+      "approach": "遍历股价时用 low 记录此前最低价格，并用当前价减 low 更新最大利润 ans。",
+      "inputContract": "n；下一行 n 个股价",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    low, ans = float('inf'), 0  # low：目前最低买入价；ans：最大利润\n    for x in nums:  # x：当前股价\n        low = min(low, x)\n        ans = max(ans, x - low)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC121 · 买卖股票的最佳时机\n# 输入：n；下一行 n 个股价\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC121 · 买卖股票的最佳时机\n# 输入：n；下一行 n 个股价\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n8 2 5 1 7\n",
+      "expectedOutput": "6",
+      "normalizer": "trim",
+      "sequence": 77
+    },
+    {
+      "id": "lc-55",
+      "lc": 55,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "跳跃游戏",
+      "category": "贪心算法",
+      "tags": [
+        "贪心算法"
+      ],
+      "statement": [
+        "从非空数组的下标 0 出发，每个非负元素表示当前位置最多能向右跳多少步，判断能否到达末尾。",
+        "第一行输入 n，第二行输入数组，输出小写 true 或 false。"
+      ],
+      "approach": "扫描 nums 并用 far 维护最远可达下标，若当前 i 超出 far 就失败，否则继续扩大可达范围。",
+      "inputContract": "n；下一行 n 个非负整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    far = 0  # far：目前能到达的最远下标\n    for i, x in enumerate(nums):  # i：当前下标；x：当前位置最大跳跃长度\n        if i > far:\n            print('false')\n            return\n        far = max(far, i + x)\n    print('true')\n\nmain()",
+      "starterCode": "# LC55 · 跳跃游戏\n# 输入：n；下一行 n 个非负整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC55 · 跳跃游戏\n# 输入：n；下一行 n 个非负整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n2 3 1 1 4\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 78
+    },
+    {
+      "id": "lc-45",
+      "lc": 45,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "跳跃游戏 II",
+      "category": "贪心算法",
+      "tags": [
+        "贪心算法"
+      ],
+      "statement": [
+        "从数组下标 0 出发，每个非负元素表示最多可向右跳的步数，求到末尾的最少跳跃次数。",
+        "第一行输入 n，第二行输入数组，保证末尾可达，输出最少次数。"
+      ],
+      "approach": "用 end 表示当前跳跃次数的覆盖边界、far 收集下一跳的最远位置，扫描到 end 时才增加一次跳跃。",
+      "inputContract": "n；下一行 n 个非负整数，保证末尾可达",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    end = far = ans = 0  # end：本跳边界；far：下一跳最远位置；ans：跳跃次数\n    for i in range(n - 1):  # i：当前扫描下标，不需要从终点再跳\n        far = max(far, i + nums[i])\n        if i == end:\n            ans += 1\n            end = far\n    print(ans)\n\nmain()",
+      "starterCode": "# LC45 · 跳跃游戏 II\n# 输入：n；下一行 n 个非负整数，保证末尾可达\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC45 · 跳跃游戏 II\n# 输入：n；下一行 n 个非负整数，保证末尾可达\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n2 3 1 1 4\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 79
+    },
+    {
+      "id": "lc-763",
+      "lc": 763,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "划分字母区间",
+      "category": "贪心算法",
+      "tags": [
+        "贪心算法"
+      ],
+      "statement": [
+        "把字符串划分成尽可能多的连续片段，使每种字母只出现在一个片段内。",
+        "输入一行小写字母串，按原顺序输出各片段长度。"
+      ],
+      "approach": "先记录每个字符最后出现的下标，再不断扩展当前片段的 right，扫描位置到达 right 时切出一个片段。",
+      "inputContract": "一行小写字母串",
+      "complexity": "时间 O(n)，空间 O(字符种类数)。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：输入字符串\n    last = {ch: i for i, ch in enumerate(s)}  # last：字符 ch → 最后出现下标 i\n    left = right = 0  # left、right：当前片段的起点和最远终点\n    ans = []  # ans：各片段长度\n    for i, ch in enumerate(s):\n        right = max(right, last[ch])\n        if i == right:\n            ans.append(right - left + 1)\n            left = i + 1\n    print(*ans)\n\nmain()",
+      "starterCode": "# LC763 · 划分字母区间\n# 输入：一行小写字母串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC763 · 划分字母区间\n# 输入：一行小写字母串\n\ndef main():\n    s = input().strip()  # s：输入字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "abacdefed\n",
+      "expectedOutput": "3 1 5",
+      "normalizer": "trim",
+      "sequence": 80
+    },
+    {
+      "id": "lc-70",
+      "lc": 70,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "爬楼梯",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "每次可以上一级或两级台阶，计算到达第 n 级台阶的不同走法数。",
+        "输入正整数 n，输出走法数。"
+      ],
+      "approach": "用 prev、cur 保存相邻两级的走法数，每上一级就将新走法数更新为两者之和。",
+      "inputContract": "正整数 n",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：台阶总数\n    prev, cur = 0, 1  # prev、cur：相邻两级的走法数，初始 cur 表示第 0 级\n    for _ in range(n): prev, cur = cur, prev + cur\n    print(cur)\n\nmain()",
+      "starterCode": "# LC70 · 爬楼梯\n# 输入：正整数 n\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC70 · 爬楼梯\n# 输入：正整数 n\n\ndef main():\n    n = int(input())  # n：台阶总数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n",
+      "expectedOutput": "8",
+      "normalizer": "trim",
+      "sequence": 81
+    },
+    {
+      "id": "lc-118",
+      "lc": 118,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "杨辉三角",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "输出杨辉三角的前 n 行，每行两端为 1，中间每个数等于上一行相邻两数之和。",
+        "输入正整数 n，每行输出一行三角形数字，以空格分隔。"
+      ],
+      "approach": "将上一行分别在左端和右端补零后逐项相加，得到下一行并输出。",
+      "inputContract": "正整数 n",
+      "complexity": "时间 O(n²)，额外空间 O(n)（逐行输出）。",
+      "referenceCode": "def main():\n    n = int(input())  # n：要输出的行数\n    row = [1]  # row：当前一行\n    for _ in range(n):\n        print(*row)\n        row = [a + b for a, b in zip([0] + row, row + [0])]  # a、b：上一行相邻两项\n\nmain()",
+      "starterCode": "# LC118 · 杨辉三角\n# 输入：正整数 n\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC118 · 杨辉三角\n# 输入：正整数 n\n\ndef main():\n    n = int(input())  # n：要输出的行数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n",
+      "expectedOutput": "1\n1 1\n1 2 1\n1 3 3 1",
+      "normalizer": "trim",
+      "sequence": 82
+    },
+    {
+      "id": "lc-198",
+      "lc": 198,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "打家劫舍",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "一排房屋各有一定金额，不能选择相邻房屋，求可以取得的最大总金额。",
+        "第一行输入 n，第二行输入各屋非负金额，输出最大总额。"
+      ],
+      "approach": "用 prev、cur 保存前两步的最优金额，每间房比较“不选当前房”和“选当前房加前前步最优值”。",
+      "inputContract": "n；下一行 n 个非负金额",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    prev = cur = 0  # prev：前前间为止的最优额；cur：前一间为止的最优额\n    for x in nums:  # x：当前房屋金额\n        prev, cur = cur, max(cur, prev + x)\n    print(cur)\n\nmain()",
+      "starterCode": "# LC198 · 打家劫舍\n# 输入：n；下一行 n 个非负金额\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC198 · 打家劫舍\n# 输入：n；下一行 n 个非负金额\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n2 7 9 3 1\n",
+      "expectedOutput": "12",
+      "normalizer": "trim",
+      "sequence": 83
+    },
+    {
+      "id": "lc-279",
+      "lc": 279,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "完全平方数",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "用若干个正完全平方数凑出 n，同一个平方数可以多次使用，求最少使用数量。",
+        "输入正整数 n，输出最少数量。"
+      ],
+      "approach": "把不超过 n 的平方数作为 coins，令 dp[total] 取所有 dp[total - x] 加一的最小值。",
+      "inputContract": "正整数 n",
+      "complexity": "时间 O(n√n)，空间 O(n)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：要凑成的目标整数\n    amount = n  # amount：目标金额，与零钱兑换统一\n    coins = [i * i for i in range(1, int(n ** 0.5) + 1)]  # coins：可用平方数；i：平方根\n\n    dp = [0] + [amount + 1] * amount  # dp：凑成各金额需要的最少数量；大初值表示不可达\n    for total in range(1, amount + 1):  # total：当前要凑的金额\n        for x in coins:  # x：本次尝试使用的面额\n            if x <= total: dp[total] = min(dp[total], dp[total - x] + 1)\n    print(dp[amount] if dp[amount] <= amount else -1)\n\nmain()",
+      "starterCode": "# LC279 · 完全平方数\n# 输入：正整数 n\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC279 · 完全平方数\n# 输入：正整数 n\n\ndef main():\n    n = int(input())  # n：要凑成的目标整数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "13\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 84
+    },
+    {
+      "id": "lc-322",
+      "lc": 322,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "零钱兑换",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "使用给定的正整数硬币面额凑出 amount，每种硬币数量不限，求最少硬币数。",
+        "第一行输入面额种数 n 和非负目标 amount，第二行输入面额，无法凑出时输出 -1。"
+      ],
+      "approach": "令 dp[total] 表示凑成当前金额的最少硬币数，枚举最后一枚面额 x 并从 dp[total - x] 转移。",
+      "inputContract": "n amount；下一行 n 个正整数面额",
+      "complexity": "时间 O(n·amount)，空间 O(amount)。",
+      "referenceCode": "def main():\n    n, amount = map(int, input().split())  # n：面额种数；amount：目标金额\n    coins = list(map(int, input().split()))  # coins：可用硬币面额\n    dp = [0] + [amount + 1] * amount  # dp：凑成各金额需要的最少数量；大初值表示不可达\n    for total in range(1, amount + 1):  # total：当前要凑的金额\n        for x in coins:  # x：本次尝试使用的面额\n            if x <= total: dp[total] = min(dp[total], dp[total - x] + 1)\n    print(dp[amount] if dp[amount] <= amount else -1)\n\nmain()",
+      "starterCode": "# LC322 · 零钱兑换\n# 输入：n amount；下一行 n 个正整数面额\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC322 · 零钱兑换\n# 输入：n amount；下一行 n 个正整数面额\n\ndef main():\n    n, amount = map(int, input().split())  # n：面额种数；amount：目标金额\n    coins = list(map(int, input().split()))  # coins：可用硬币面额\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 11\n1 2 5\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "sequence": 85
+    },
+    {
+      "id": "lc-139",
+      "lc": 139,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "单词拆分",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "判断字符串能否由字典中的单词连续拼接而成，每个单词可以重复使用。",
+        "第一行输入字符串 s，第二行输入字典词数 n，随后每行输入一个非空单词，输出小写 true 或 false。"
+      ],
+      "approach": "用 dp 标记各前缀能否拆分，若某个可拆分前缀之后恰好接上一个字典单词，就标记新的前缀可达。",
+      "inputContract": "s；n；随后 n 行字典单词",
+      "complexity": "时间 O(|s|·n·L)，空间 O(|s|)，L 为字典最大词长。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：待拆分字符串\n    n = int(input())  # n：字典词数\n    words = [input().strip() for _ in range(n)]  # words：可重复使用的单词\n    dp = [True] + [False] * len(s)  # dp[i]：长度为 i 的前缀能否拆分\n    for i in range(len(s)):  # i：当前前缀的结束位置\n        if dp[i]:\n            for word in words:  # word：尝试接上的字典词\n                if s.startswith(word, i): dp[i + len(word)] = True\n    print(str(dp[-1]).lower())\n\nmain()",
+      "starterCode": "# LC139 · 单词拆分\n# 输入：s；n；随后 n 行字典单词\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC139 · 单词拆分\n# 输入：s；n；随后 n 行字典单词\n\ndef main():\n    s = input().strip()  # s：待拆分字符串\n    n = int(input())  # n：字典词数\n    words = [input().strip() for _ in range(n)]  # words：可重复使用的单词\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "applepenapple\n2\napple\npen\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 86
+    },
+    {
+      "id": "lc-300",
+      "lc": 300,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最长递增子序列",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "在数组中选择若干元素，保留原先后顺序但不必连续，使其严格递增，求最大长度。",
+        "第一行输入 n，第二行输入数组，输出最长长度。"
+      ],
+      "approach": "用 tails 保存各长度递增子序列的最小末尾值，二分找到第一个不小于 x 的位置替换或追加，最终长度就是答案。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n log n)，空间 O(n)。",
+      "referenceCode": "from bisect import bisect_left\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    tails = []  # tails：各长度递增子序列的最小末尾值\n    for x in nums:  # x：当前元素\n        i = bisect_left(tails, x)  # i：第一个不小于 x 的位置\n        if i == len(tails): tails.append(x)\n        else: tails[i] = x\n    print(len(tails))\n\nmain()",
+      "starterCode": "# LC300 · 最长递增子序列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC300 · 最长递增子序列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "6\n3 1 2 5 4 6\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "sequence": 87
+    },
+    {
+      "id": "lc-152",
+      "lc": 152,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "乘积最大子数组",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "从非空整数数组中选取一个非空连续子数组，使元素乘积最大。",
+        "第一行输入 n，第二行输入数组，输出最大乘积。"
+      ],
+      "approach": "同时维护以当前位置结尾的最大乘积 high 和最小乘积 low，让当前数与两者相乘后共同参与更新 ans。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    high = low = ans = nums[0]  # high、low：当前位置结尾的最大、最小乘积；ans：全局最大值\n    for i in range(1, n):  # i：当前下标\n        x = nums[i]  # x：当前元素\n        high, low = max(x, high * x, low * x), min(x, high * x, low * x)\n        ans = max(ans, high)\n    print(ans)\n\nmain()",
+      "starterCode": "# LC152 · 乘积最大子数组\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC152 · 乘积最大子数组\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n2 3 -2 4\n",
+      "expectedOutput": "6",
+      "normalizer": "trim",
+      "sequence": 88
+    },
+    {
+      "id": "lc-416",
+      "lc": 416,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "分割等和子集",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "判断能否将正整数数组分成两个不相交的子集，使两个子集的元素和相等且覆盖所有元素。",
+        "第一行输入 n，第二行输入正整数数组，输出小写 true 或 false。"
+      ],
+      "approach": "总和为偶数时转成容量为一半总和的 0/1 背包，对每个数倒序更新 dp，判断目标和是否可达。",
+      "inputContract": "n；下一行 n 个正整数",
+      "complexity": "时间 O(n·target)，空间 O(target)，target 为总和的一半。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    total = sum(nums)  # total：所有元素之和\n    if total % 2:\n        print('false')\n        return\n    target = total // 2  # target：每个子集的目标和\n    dp = [True] + [False] * target  # dp[j]：是否能选出和为 j 的子集\n    for x in nums:  # x：当前可选元素\n        for j in range(target, x - 1, -1):  # j：倒序枚举的目标和\n            dp[j] = dp[j] or dp[j - x]\n    print(str(dp[target]).lower())\n\nmain()",
+      "starterCode": "# LC416 · 分割等和子集\n# 输入：n；下一行 n 个正整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC416 · 分割等和子集\n# 输入：n；下一行 n 个正整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "4\n1 5 11 5\n",
+      "expectedOutput": "true",
+      "normalizer": "trim",
+      "sequence": 89
+    },
+    {
+      "id": "lc-32",
+      "lc": 32,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最长有效括号",
+      "category": "动态规划",
+      "tags": [
+        "动态规划"
+      ],
+      "statement": [
+        "给定只包含圆括号的字符串，求最长连续且合法的括号子串长度。",
+        "输入一行括号串，输出最长长度，空串输出 0。"
+      ],
+      "approach": "用 stack 保存未匹配左括号和最近无效边界的下标，匹配右括号后用当前下标减栈顶更新最长长度。",
+      "inputContract": "一行仅含 ( 和 ) 的字符串",
+      "complexity": "时间 O(n)，空间 O(n)。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：输入括号串\n    stack, ans = [-1], 0  # stack：未匹配位置栈，底部为无效边界；ans：最长有效长度\n    for i, ch in enumerate(s):  # i：当前下标；ch：当前括号\n        if ch == '(': stack.append(i)\n        else:\n            stack.pop()\n            if not stack: stack.append(i)\n            else: ans = max(ans, i - stack[-1])\n    print(ans)\n\nmain()",
+      "starterCode": "# LC32 · 最长有效括号\n# 输入：一行仅含 ( 和 ) 的字符串\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC32 · 最长有效括号\n# 输入：一行仅含 ( 和 ) 的字符串\n\ndef main():\n    s = input().strip()  # s：输入括号串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": ")()())\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "sequence": 90
+    },
+    {
+      "id": "lc-62",
+      "lc": 62,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "不同路径",
+      "category": "多维动态规划",
+      "tags": [
+        "多维动态规划"
+      ],
+      "statement": [
+        "从 m 行 n 列网格的左上角走到右下角，每次只能向右或向下走一步，计算不同路径数。",
+        "输入正整数 m n，输出路径数。"
+      ],
+      "approach": "用一维 dp 保存各列的路径数，从第二行开始让每个位置累加左侧路径数，最终 dp[-1] 即为答案。",
+      "inputContract": "m n，表示行数和列数",
+      "complexity": "时间 O(mn)，空间 O(n)。",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    dp = [1] * n  # dp：当前行各列的路径数，首行均为 1\n    for row in range(1, m):  # row：当前行号\n        for col in range(1, n):  # col：当前列号\n            dp[col] += dp[col - 1]\n    print(dp[-1])\n\nmain()",
+      "starterCode": "# LC62 · 不同路径\n# 输入：m n，表示行数和列数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC62 · 不同路径\n# 输入：m n，表示行数和列数\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 4\n",
+      "expectedOutput": "10",
+      "normalizer": "trim",
+      "sequence": 91
+    },
+    {
+      "id": "lc-64",
+      "lc": 64,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最小路径和",
+      "category": "多维动态规划",
+      "tags": [
+        "多维动态规划"
+      ],
+      "statement": [
+        "从非负整数网格的左上角走到右下角，每次只能向右或向下，求路径经过的所有格子之和的最小值。",
+        "第一行输入 m n，随后输入网格，输出最小路径和。"
+      ],
+      "approach": "按行更新 dp，让每格的最小路径和等于当前值加上来自上方和左方的较小值。",
+      "inputContract": "m n；随后 m 行，每行 n 个非负整数",
+      "complexity": "时间 O(mn)，空间 O(n)。",
+      "referenceCode": "def main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n    dp = [float('inf')] * n  # dp：当前行各列的最小路径和\n    dp[0] = 0\n    for row in grid:  # row：当前网格行\n        for col, x in enumerate(row):  # col：列号；x：当前格子的值\n            dp[col] = min(dp[col], dp[col - 1] if col else float('inf')) + x\n    print(dp[-1])\n\nmain()",
+      "starterCode": "# LC64 · 最小路径和\n# 输入：m n；随后 m 行，每行 n 个非负整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC64 · 最小路径和\n# 输入：m n；随后 m 行，每行 n 个非负整数\n\ndef main():\n    m, n = map(int, input().split())  # m：行数；n：列数\n    grid = [list(map(int, input().split())) for _ in range(m)]  # grid：输入矩阵\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3 3\n1 3 1\n1 5 1\n4 2 1\n",
+      "expectedOutput": "7",
+      "normalizer": "trim",
+      "sequence": 92
+    },
+    {
+      "id": "lc-5",
+      "lc": 5,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最长回文子串",
+      "category": "多维动态规划",
+      "tags": [
+        "多维动态规划"
+      ],
+      "statement": [
+        "寻找字符串中正读反读相同的最长连续子串。",
+        "输入一行字符串，输出最长回文子串；为便于 ACM 判题，长度相同时输出起点最靠左的一个，空串输出空行。"
+      ],
+      "approach": "依次以单个字符和相邻字符为中心向两边扩展，用 start、size 保存最先找到的最长回文子串。",
+      "inputContract": "一行字符串；并列最长时取最靠左者",
+      "complexity": "时间 O(n²)，额外空间 O(1)（不计输出字符串）。",
+      "referenceCode": "def main():\n    s = input().strip()  # s：输入字符串\n    start = size = 0  # start、size：最长回文的起点和长度\n    for i in range(len(s)):  # i：当前中心位置\n        for left, right in ((i, i), (i, i + 1)):  # left、right：奇数、偶数长度回文的扩展端点\n            while left >= 0 and right < len(s) and s[left] == s[right]:\n                left -= 1\n                right += 1\n            if right - left - 1 > size: start, size = left + 1, right - left - 1\n    print(s[start:start + size])\n\nmain()",
+      "starterCode": "# LC5 · 最长回文子串\n# 输入：一行字符串；并列最长时取最靠左者\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC5 · 最长回文子串\n# 输入：一行字符串；并列最长时取最靠左者\n\ndef main():\n    s = input().strip()  # s：输入字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "cbbd\n",
+      "expectedOutput": "bb",
+      "normalizer": "trim",
+      "sequence": 93
+    },
+    {
+      "id": "lc-1143",
+      "lc": 1143,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "最长公共子序列",
+      "category": "多维动态规划",
+      "tags": [
+        "多维动态规划"
+      ],
+      "statement": [
+        "从两个字符串中分别删除若干字符而不改变剩余顺序，求能得到的最长相同序列长度。",
+        "输入两行字符串，允许空行，输出最长公共子序列长度。"
+      ],
+      "approach": "逐行更新 dp，字符相同就取左上角值加一，否则取上方和左方的较大值，并用 prev 暂存左上角。",
+      "inputContract": "两行字符串 a、b",
+      "complexity": "时间 O(mn)，空间 O(n)，m、n 为两串长度。",
+      "referenceCode": "def main():\n    a, b = input().strip(), input().strip()  # a、b：两个输入字符串\n    dp = [0] * (len(b) + 1)  # dp：当前 a 前缀与各 b 前缀的最长公共子序列长度\n    for x in a:  # x：a 中当前字符\n        prev = 0  # prev：更新前的左上角值\n        for j, y in enumerate(b, 1):  # j：b 的前缀长度；y：b 中当前字符\n            old = dp[j]  # old：上方的旧值，下一步作为左上角\n            dp[j] = prev + 1 if x == y else max(dp[j], dp[j - 1])\n            prev = old\n    print(dp[-1])\n\nmain()",
+      "starterCode": "# LC1143 · 最长公共子序列\n# 输入：两行字符串 a、b\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC1143 · 最长公共子序列\n# 输入：两行字符串 a、b\n\ndef main():\n    a, b = input().strip(), input().strip()  # a、b：两个输入字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "abcde\nace\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "sequence": 94
+    },
+    {
+      "id": "lc-72",
+      "lc": 72,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "编辑距离",
+      "category": "多维动态规划",
+      "tags": [
+        "多维动态规划"
+      ],
+      "statement": [
+        "把字符串 a 变成 b，每次可插入、删除或替换一个字符，求最少操作次数。",
+        "输入两行字符串，允许空行，输出最少编辑次数。"
+      ],
+      "approach": "逐行更新 dp，字符相同沿用左上角，否则取删除、插入、替换三种旧状态的最小值加一。",
+      "inputContract": "两行字符串 a、b",
+      "complexity": "时间 O(mn)，空间 O(n)，m、n 为两串长度。",
+      "referenceCode": "def main():\n    a, b = input().strip(), input().strip()  # a、b：原字符串和目标字符串\n    dp = list(range(len(b) + 1))  # dp：当前 a 前缀变为各 b 前缀的最少次数\n    for i, x in enumerate(a, 1):  # i：a 的前缀长度；x：当前字符\n        prev, dp[0] = dp[0], i  # prev：更新前的左上角值\n        for j, y in enumerate(b, 1):  # j：b 的前缀长度；y：当前目标字符\n            old = dp[j]  # old：上方的旧值，下一步作为左上角\n            dp[j] = prev if x == y else 1 + min(prev, dp[j], dp[j - 1])\n            prev = old\n    print(dp[-1])\n\nmain()",
+      "starterCode": "# LC72 · 编辑距离\n# 输入：两行字符串 a、b\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC72 · 编辑距离\n# 输入：两行字符串 a、b\n\ndef main():\n    a, b = input().strip(), input().strip()  # a、b：原字符串和目标字符串\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "horse\nros\n",
+      "expectedOutput": "3",
+      "normalizer": "trim",
+      "sequence": 95
+    },
+    {
+      "id": "lc-136",
+      "lc": 136,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "只出现一次的数字",
+      "category": "技巧",
+      "tags": [
+        "技巧"
+      ],
+      "statement": [
+        "非空数组中只有一个元素出现一次，其他元素都出现两次，找出只出现一次的元素。",
+        "第一行输入 n，第二行输入数组，输出该元素。"
+      ],
+      "approach": "将所有元素依次异或到 ans，相同元素两两抵消后只剩出现一次的数字。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    ans = 0  # ans：当前所有元素的异或结果\n    for x in nums: ans ^= x  # x：当前元素\n    print(ans)\n\nmain()",
+      "starterCode": "# LC136 · 只出现一次的数字\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC136 · 只出现一次的数字\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n4 1 2 1 2\n",
+      "expectedOutput": "4",
+      "normalizer": "trim",
+      "sequence": 96
+    },
+    {
+      "id": "lc-169",
+      "lc": 169,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "多数元素",
+      "category": "技巧",
+      "tags": [
+        "技巧"
+      ],
+      "statement": [
+        "非空数组中保证有一个元素出现次数严格超过数组长度的一半，找出这个元素。",
+        "第一行输入 n，第二行输入数组，输出多数元素。"
+      ],
+      "approach": "用 candidate 和 count 进行投票抵消，计数归零就更换候选，相同加一、不同减一，最终候选即多数元素。",
+      "inputContract": "n；下一行 n 个整数，保证多数元素存在",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    candidate = count = 0  # candidate：当前候选元素；count：候选的净票数\n    for x in nums:  # x：当前元素\n        if count == 0: candidate = x\n        count += 1 if x == candidate else -1\n    print(candidate)\n\nmain()",
+      "starterCode": "# LC169 · 多数元素\n# 输入：n；下一行 n 个整数，保证多数元素存在\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC169 · 多数元素\n# 输入：n；下一行 n 个整数，保证多数元素存在\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n2 2 1 2 3\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 97
+    },
+    {
+      "id": "lc-75",
+      "lc": 75,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "颜色分类",
+      "category": "技巧",
+      "tags": [
+        "技巧"
+      ],
+      "statement": [
+        "数组仅包含 0、1、2，原地将相同值聚集并按从小到大排列，不调用排序函数。",
+        "第一行输入 n，第二行输入数组，输出分类结果。"
+      ],
+      "approach": "用 left、right 分隔零区和二区，扫描 i 时把 0 换到左边、2 换到右边，遇到 1 直接前进。",
+      "inputContract": "n；下一行 n 个 0、1 或 2",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    left, i, right = 0, 0, n - 1  # left：零区后界；i：当前下标；right：二区前界\n    while i <= right:\n        if nums[i] == 0:\n            nums[left], nums[i] = nums[i], nums[left]\n            left += 1\n            i += 1\n        elif nums[i] == 2:\n            nums[i], nums[right] = nums[right], nums[i]\n            right -= 1\n        else: i += 1\n    print(*nums)\n\nmain()",
+      "starterCode": "# LC75 · 颜色分类\n# 输入：n；下一行 n 个 0、1 或 2\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC75 · 颜色分类\n# 输入：n；下一行 n 个 0、1 或 2\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "6\n2 0 2 1 1 0\n",
+      "expectedOutput": "0 0 1 1 2 2",
+      "normalizer": "trim",
+      "sequence": 98
+    },
+    {
+      "id": "lc-31",
+      "lc": 31,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "下一个排列",
+      "category": "技巧",
+      "tags": [
+        "技巧"
+      ],
+      "statement": [
+        "将非空数组改为字典序中紧邻它的下一个排列；如果已经是最大排列，则改成最小排列。",
+        "第一行输入 n，第二行输入数组，允许重复元素，要求原地修改并输出结果。"
+      ],
+      "approach": "从右找到首个上升位置 i，与右侧最靠右的大于它的数交换，再调用 reverse_range 反转后缀得到最小增量。",
+      "inputContract": "n；下一行 n 个整数",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def reverse_range(nums, left, right):  # nums：数组；left、right：待反转区间端点\n    while left < right:\n        nums[left], nums[right] = nums[right], nums[left]\n        left += 1\n        right -= 1\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n    i = n - 2  # i：从右找到的首个上升位置\n    while i >= 0 and nums[i] >= nums[i + 1]: i -= 1\n    if i >= 0:\n        j = n - 1  # j：从右找到的首个大于 nums[i] 的位置\n        while nums[j] <= nums[i]: j -= 1\n        nums[i], nums[j] = nums[j], nums[i]\n    reverse_range(nums, i + 1, n - 1)\n    print(*nums)\n\nmain()",
+      "starterCode": "# LC31 · 下一个排列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC31 · 下一个排列\n# 输入：n；下一行 n 个整数\n\ndef main():\n    n = int(input())  # n：元素个数\n    nums = list(map(int, input().split()))  # nums：输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "3\n1 3 2\n",
+      "expectedOutput": "2 1 3",
+      "normalizer": "trim",
+      "sequence": 99
+    },
+    {
+      "id": "lc-287",
+      "lc": 287,
+      "track": "leetcode",
+      "runtime": "python",
+      "judgeMode": "sample",
+      "title": "寻找重复数",
+      "category": "技巧",
+      "tags": [
+        "技巧"
+      ],
+      "statement": [
+        "长度为 n+1 的数组中所有值都在 1 到 n 之间，只有一种值重复出现，找出它，不能修改数组且只用常数额外空间。",
+        "第一行输入实际数组长度 m，第二行输入 m 个数，数值范围为 1 到 m-1，输出重复数。"
+      ],
+      "approach": "把 nums 的值当作下一下标，用 slow、fast 先在环内相遇，再让 slow 从 0 出发同步前进，重逢处就是重复数。",
+      "inputContract": "实际长度 m；下一行 m 个整数，值域 1..m-1",
+      "complexity": "时间 O(n)，额外空间 O(1)。",
+      "referenceCode": "def main():\n    m = int(input())  # m：数组实际长度\n    nums = list(map(int, input().split()))  # nums：值域 1..m-1 的输入数组\n    slow = fast = 0  # slow、fast：在下标映射中走一步、两步的指针\n    while True:\n        slow, fast = nums[slow], nums[nums[fast]]\n        if slow == fast: break\n    slow = 0\n    while slow != fast:\n        slow, fast = nums[slow], nums[fast]\n    print(slow)\n\nmain()",
+      "starterCode": "# LC287 · 寻找重复数\n# 输入：实际长度 m；下一行 m 个整数，值域 1..m-1\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nmain()",
+      "inputStarterCode": "# LC287 · 寻找重复数\n# 输入：实际长度 m；下一行 m 个整数，值域 1..m-1\n\ndef main():\n    m = int(input())  # m：数组实际长度\n    nums = list(map(int, input().split()))  # nums：值域 1..m-1 的输入数组\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()",
+      "sampleInput": "5\n1 3 4 2 2\n",
+      "expectedOutput": "2",
+      "normalizer": "trim",
+      "sequence": 100
+    },
+    {
+      "id": "mm-51",
+      "sequence": 101,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Multi-Head Attention",
+      "category": "Transformer / MHA",
+      "tags": [
+        "Transformer",
+        "MHA"
+      ],
+      "approach": "将 x 投影成 q、k、v 并拆成多头，计算缩放点积并遮住无效键，用 softmax 权重汇总 v 后合并多头并输出投影。",
+      "inputContract": "x[B,L,D] -> q/k/v[B,H,L,Dh] -> score[B,H,L,L] -> y[B,L,D]",
+      "complexity": "时间 O(B·L²·D)，attention 矩阵额外空间 O(B·H·L²)。pad_mask[B,L] 中 True 表示有效 token。",
+      "referenceCode": "import torch.nn as nn\n\nclass MHA(nn.Module):\n    def __init__(self, d, h):  # d：模型维度；h：注意力头数\n        super().__init__()\n        assert d % h == 0\n        self.h, self.dh = h, d // h  # self.h：头数；self.dh：每头维度\n        # self.q/k/v：查询/键/值投影层；self.o：输出投影层\n        self.q, self.k, self.v, self.o = [nn.Linear(d, d) for _ in range(4)]\n    def split(self, x):  # x：待拆成多头的张量 [B,L,D]\n        B, L, _ = x.shape  # B：批量大小；L：序列长度\n        return x.reshape(B, L, self.h, self.dh).transpose(1, 2)\n    # x：输入序列 [B,L,D]；pad_mask：有效键标记 [B,L]\n    def forward(self, x, pad_mask=None):\n        B, L, _ = x.shape  # B：批量大小；L：序列长度\n        # q、k、v：查询、键、值张量 [B,H,L,Dh]\n        q, k, v = map(self.split, (self.q(x), self.k(x), self.v(x)))\n        score = q @ k.transpose(-2, -1) / q.size(-1) ** 0.5  # score：缩放后的注意力分数\n        if pad_mask is not None:\n            score = score.masked_fill(~pad_mask[:, None, None, :].bool(), -float('inf'))\n        x = score.softmax(-1).nan_to_num(0) @ v  # x：各头加权结果 [B,H,L,Dh]\n        x = x.transpose(1, 2).reshape(B, L, -1)  # x：拼接多头后的结果 [B,L,D]\n        return self.o(x)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM01 · Multi-Head Attention\n# Shape / 公式：x[B,L,D] -> q/k/v[B,H,L,Dh] -> score[B,H,L,L] -> y[B,L,D]\n# 请从零实现：MHA\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "MHA"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现继承自 `nn.Module` 的多头自注意力模块 `MHA`。构造函数接收模型维度 `d` 和头数 `h`，并保证 `d` 能被 `h` 整除。",
+        "`forward(x, pad_mask=None)` 接收 `x[B,L,D]`，完成多头缩放点积自注意力后返回 `y[B,L,D]`，其中每个头的维度为 `Dh=D/H`。",
+        "可选的 `pad_mask[B,L]` 中 `True` 表示有效位置，`False` 表示被屏蔽的键位置；被屏蔽位置不得影响注意力输出。"
+      ],
+      "trackSequence": 1
+    },
+    {
+      "id": "mm-52",
+      "sequence": 102,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Scaled Dot-Product Attention + Causal Mask",
+      "category": "Attention / Mask",
+      "tags": [
+        "Attention",
+        "Mask"
+      ],
+      "approach": "计算 q、k 的缩放点积分数，用 pad_mask 和 causal 遮住无效键及未来位置，再以 softmax 权重对 v 加权求和。",
+      "inputContract": "q[B,H,L,D], k/v[B,H,L,D] -> score[B,H,L,L]",
+      "complexity": "O(B·H·L²·D)。-inf 经 softmax 后概率为 0；不能在 softmax 后再简单乘 0。",
+      "referenceCode": "import torch\n\n# q/k/v：查询/键/值；pad_mask：有效键标记；causal：是否屏蔽未来\ndef attention(q, k, v, pad_mask=None, causal=False):\n    score = q @ k.transpose(-2, -1) / q.size(-1) ** 0.5  # score：缩放后的注意力分数\n    if pad_mask is not None:\n        score = score.masked_fill(~pad_mask[:, None, None, :].bool(), -float('inf'))\n    if causal:\n        # mask：未来位置为 True 的因果遮罩\n        mask = torch.ones(q.size(-2), k.size(-2), device=q.device, dtype=torch.bool).triu(1)\n        score = score.masked_fill(mask, -float('inf'))\n    return score.softmax(-1).nan_to_num(0) @ v",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM02 · Scaled Dot-Product Attention + Causal Mask\n# Shape / 公式：q[B,H,L,D], k/v[B,H,L,D] -> score[B,H,L,L]\n# 请从零实现：attention\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "attention"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `attention(q, k, v, pad_mask=None, causal=False)`，其中 `q`、`k`、`v` 的形状均为 `[B,H,L,D]`。",
+        "函数需要计算缩放点积注意力，并返回形状为 `[B,H,L,D]` 的加权结果。",
+        "`pad_mask[B,L]` 中 `True` 表示有效键；当 `causal=True` 时，序列位置只能关注自身及其之前的位置。"
+      ],
+      "trackSequence": 2
+    },
+    {
+      "id": "mm-53",
+      "sequence": 103,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "CLIP Loss / InfoNCE",
+      "category": "多模态对齐 / Batch Negatives",
+      "tags": [
+        "多模态对齐",
+        "Batch Negatives"
+      ],
+      "approach": "将 img、txt 归一化后计算除以 temp 的相似度矩阵，以对角线配对为标签，平均图到文和文到图的交叉熵损失。",
+      "inputContract": "img[B,D], txt[B,D] -> logits[B,B]；label=[0,1,...,B-1]",
+      "complexity": "时间 O(B²D)，显存 O(B²)。非对角元素天然充当 batch 内负样本。",
+      "referenceCode": "import torch\nimport torch.nn.functional as F\n\ndef clip_loss(img, txt, temp=0.07):  # img、txt：配对的图文向量 [B,D]；temp：温度\n    img, txt = F.normalize(img, dim=-1), F.normalize(txt, dim=-1)\n    logits = img @ txt.T / temp  # logits：图文两两相似度分数 [B,B]\n    y = torch.arange(img.size(0), device=img.device)  # y：正确配对的下标标签 [0,...,B-1]\n    return (F.cross_entropy(logits, y) + F.cross_entropy(logits.T, y)) / 2",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM03 · CLIP Loss / InfoNCE\n# Shape / 公式：img[B,D], txt[B,D] -> logits[B,B]；label=[0,1,...,B-1]\n# 请从零实现：clip_loss\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "clip_loss"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `clip_loss(img, txt, temp=0.07)`。`img[B,D]` 与 `txt[B,D]` 分别表示同一批次中的图像和文本向量，相同下标构成正样本对。",
+        "函数应基于余弦相似度和温度 `temp` 得到图文两两匹配分数 `logits[B,B]`，类别标签为 `0` 到 `B-1`。",
+        "分别计算图像检索文本和文本检索图像的批内对比损失，返回二者平均后的标量张量。"
+      ],
+      "trackSequence": 3
+    },
+    {
+      "id": "mm-54",
+      "sequence": 104,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Cross-Attention",
+      "category": "VLM / 跨模态注意力",
+      "tags": [
+        "VLM",
+        "跨模态注意力"
+      ],
+      "approach": "从 q_in 提取 q、从 ctx 提取 k 和 v，拆成多头后计算带遮罩的缩放点积注意力，再合并多头并输出投影。",
+      "inputContract": "q_in[B,Lq,D], ctx[B,Lk,D] -> score[B,H,Lq,Lk] -> out[B,Lq,D]",
+      "complexity": "时间 O(B·Lq·Lk·D)。pad_mask[B,Lk] 中 True 表示有效上下文 token。",
+      "referenceCode": "import torch.nn as nn\n\nclass CrossAttn(nn.Module):\n    def __init__(self, d, h):  # d：模型维度；h：注意力头数\n        super().__init__()\n        assert d % h == 0\n        self.h, self.dh = h, d // h  # self.h：头数；self.dh：每头维度\n        # self.q/k/v：查询/键/值投影层；self.o：输出投影层\n        self.q, self.k, self.v, self.o = [nn.Linear(d, d) for _ in range(4)]\n    def split(self, x):  # x：待拆成多头的张量 [B,L,D]\n        B, L, _ = x.shape  # B：批量大小；L：序列长度\n        return x.reshape(B, L, self.h, self.dh).transpose(1, 2)\n    # q_in：查询序列；ctx：上下文序列；pad_mask：有效键标记\n    def forward(self, q_in, ctx, pad_mask=None):\n        B, L, _ = q_in.shape  # B：批量大小；L：查询序列长度\n        # q：查询序列的查询；k、v：上下文的键、值\n        q, k, v = map(self.split, (self.q(q_in), self.k(ctx), self.v(ctx)))\n        score = q @ k.transpose(-2, -1) / q.size(-1) ** 0.5  # score：缩放后的注意力分数\n        if pad_mask is not None:\n            score = score.masked_fill(~pad_mask[:, None, None, :].bool(), -float('inf'))\n        x = score.softmax(-1).nan_to_num(0) @ v  # x：各头加权结果 [B,H,L,Dh]\n        x = x.transpose(1, 2).reshape(B, L, -1)  # x：拼接多头后的结果 [B,L,D]\n        return self.o(x)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM04 · Cross-Attention\n# Shape / 公式：q_in[B,Lq,D], ctx[B,Lk,D] -> score[B,H,Lq,Lk] -> out[B,Lq,D]\n# 请从零实现：CrossAttn\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "CrossAttn"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现继承自 `nn.Module` 的交叉注意力模块 `CrossAttn`，构造函数接收模型维度 `d` 和头数 `h`，并保证 `d` 能被 `h` 整除。",
+        "`forward(q_in, ctx, pad_mask=None)` 接收查询序列 `q_in[B,Lq,D]` 与上下文序列 `ctx[B,Lk,D]`，返回 `out[B,Lq,D]`。",
+        "查询来自 `q_in`，键和值来自 `ctx`。可选的 `pad_mask[B,Lk]` 中 `False` 表示对应上下文位置不可参与注意力。"
+      ],
+      "trackSequence": 4
+    },
+    {
+      "id": "mm-55",
+      "sequence": 105,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "SFT Loss",
+      "category": "自回归训练 / Shifted CE",
+      "tags": [
+        "自回归训练",
+        "Shifted CE"
+      ],
+      "approach": "将 logits 去掉末位置、labels 去掉首位置并展平，使当前预测对齐下一词标签，再计算忽略指定标签的交叉熵。",
+      "inputContract": "logits[B,L,V], labels[B,L] -> shift_logits[B,L-1,V]",
+      "complexity": "O(B·L·V)。Prompt/image token 若不计语言损失，通常把对应 label 置为 -100。",
+      "referenceCode": "import torch.nn.functional as F\n\n# logits：词表分数 [B,L,V]；labels：标签 [B,L]；ignore：忽略标签值\ndef sft_loss(logits, labels, ignore=-100):\n    logits = logits[:, :-1].reshape(-1, logits.size(-1))  # logits：去掉末位置后展平的预测分数\n    labels = labels[:, 1:].reshape(-1)  # labels：去掉首位置后展平的下一词标签\n    return F.cross_entropy(logits, labels, ignore_index=ignore)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM05 · SFT Loss\n# Shape / 公式：logits[B,L,V], labels[B,L] -> shift_logits[B,L-1,V]\n# 请从零实现：sft_loss\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "sft_loss"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `sft_loss(logits, labels, ignore=-100)`，其中模型输出 `logits` 的形状为 `[B,L,V]`，标签 `labels` 的形状为 `[B,L]`。",
+        "按自回归下一词预测的对齐关系计算交叉熵：位置 `t` 的输出用于预测位置 `t+1` 的标签。",
+        "标签值等于 `ignore` 的位置不计入损失，函数返回其余有效位置上的平均标量损失。"
+      ],
+      "trackSequence": 5
+    },
+    {
+      "id": "mm-56",
+      "sequence": 106,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "RoPE（Rotary Position Embedding）",
+      "category": "位置编码 / QK旋转",
+      "tags": [
+        "位置编码",
+        "QK旋转"
+      ],
+      "approach": "用 pos 和 freq 算出旋转角，将 x 的偶数与奇数通道按 cos、sin 成对旋转，再交错拼回原形状。",
+      "inputContract": "x[B,H,L,D], D 为偶数；theta[L,D/2] -> rope(x)[B,H,L,D]",
+      "complexity": "O(B·H·L·D)。推理解码时 pos 需要从 cache 长度继续递增，不能每步都从 0 开始。",
+      "referenceCode": "import torch\n\n# x：待旋转张量 [B,H,L,D]；pos：位置编号；base：频率基数\ndef rope(x, pos, base=10000):\n    D = x.size(-1)  # D：每个头的维度，必须为偶数\n    # freq：每对通道的旋转频率 [D/2]\n    freq = base ** (-torch.arange(0, D, 2, device=x.device, dtype=torch.float32) / D)\n    # theta：各位置、各通道对的旋转角 [L,D/2]\n    theta = pos.to(device=x.device, dtype=freq.dtype)[:, None] * freq\n    cos, sin = theta.cos().to(x.dtype), theta.sin().to(x.dtype)  # cos、sin：旋转角的余弦、正弦\n    even, odd = x[..., ::2], x[..., 1::2]  # even、odd：偶数、奇数下标通道\n    return torch.stack((even * cos - odd * sin, even * sin + odd * cos), -1).flatten(-2)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM06 · RoPE（Rotary Position Embedding）\n# Shape / 公式：x[B,H,L,D], D 为偶数；theta[L,D/2] -> rope(x)[B,H,L,D]\n# 请从零实现：rope\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "rope"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `rope(x, pos, base=10000)`，为张量 `x[B,H,L,D]` 应用旋转位置编码，其中 `D` 为偶数，`pos[L]` 给出每个序列位置的编号。",
+        "按照标准 RoPE 频率对最后一维中相邻的偶数、奇数通道成对旋转，频率基数由 `base` 指定。",
+        "返回张量的形状、数据类型和设备应与 `x` 保持一致。"
+      ],
+      "trackSequence": 6
+    },
+    {
+      "id": "mm-57",
+      "sequence": 107,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "KV Cache Attention",
+      "category": "LLM 推理 / Decode",
+      "tags": [
+        "LLM 推理",
+        "Decode"
+      ],
+      "approach": "将新增 k、v 拼到 cache 后，根据历史长度偏移因果遮罩，计算当前 q 的注意力结果并返回更新后的缓存。",
+      "inputContract": "past_k/v[B,H,Tpast,D], new q/k/v[B,H,Tnew,D] -> total K/V[B,H,T,D]",
+      "complexity": "单步 decode(Tnew=1) 每层注意力约 O(Tpast·D)，cache 空间 O(H·T·D)。GQA/MQA 通过减少 KV heads 降显存。",
+      "referenceCode": "import torch\n\n# q：当前查询；k_new/v_new：新增键/值；cache：历史 (K,V)\ndef attn_with_cache(q, k_new, v_new, cache=None):\n    k, v = k_new, v_new  # k、v：完整键、值；有缓存时再拼接历史\n    if cache is not None:\n        k, v = torch.cat((cache[0], k), -2), torch.cat((cache[1], v), -2)\n    Lq, Lk = q.size(-2), k.size(-2)  # Lq：当前查询数；Lk：历史加新增的总键数\n    # mask：考虑历史长度后的因果遮罩，True 表示屏蔽\n    mask = torch.ones(Lq, Lk, device=q.device, dtype=torch.bool).triu(Lk - Lq + 1)\n    score = q @ k.transpose(-2, -1) / q.size(-1) ** 0.5  # score：缩放后的注意力分数\n    score = score.masked_fill(mask, -float('inf'))\n    return score.softmax(-1).nan_to_num(0) @ v, (k, v)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM07 · KV Cache Attention\n# Shape / 公式：past_k/v[B,H,Tpast,D], new q/k/v[B,H,Tnew,D] -> total K/V[B,H,T,D]\n# 请从零实现：attn_with_cache\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "attn_with_cache"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `attn_with_cache(q, k_new, v_new, cache=None)`。当前查询和新增键值的形状为 `[B,H,Tnew,D]`，缓存若存在则为 `(past_k, past_v)`，形状为 `[B,H,Tpast,D]`。",
+        "函数应让当前查询对完整历史与当前键值执行因果注意力，任何查询位置都不能关注其绝对位置之后的键。",
+        "返回值为 `(out, (k, v))`：`out` 与 `q` 形状一致，更新后的 `k`、`v` 沿序列维包含旧缓存和新增内容，长度为 `Tpast+Tnew`。"
+      ],
+      "trackSequence": 7
+    },
+    {
+      "id": "mm-58",
+      "sequence": 108,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "LayerNorm / RMSNorm",
+      "category": "Normalization",
+      "tags": [
+        "Normalization"
+      ],
+      "approach": "LayerNorm 先减均值再按均方加 eps 的平方根归一化并缩放平移，RMSNorm 直接按同一公式归一化原输入并缩放。",
+      "inputContract": "x[...,D]；gamma/beta/weight[D]",
+      "complexity": "均为 O(numel(x))。RMSNorm 省去均值中心化，现代 LLM 中非常常见。",
+      "referenceCode": "# x：输入张量；gamma：缩放参数；beta：平移参数；eps：稳定小量\ndef layer_norm(x, gamma, beta, eps=1e-5):\n    x = x - x.mean(-1, keepdim=True)  # x：最后一维减去均值后的张量\n    return x * (x.square().mean(-1, keepdim=True) + eps).rsqrt() * gamma + beta\n\ndef rms_norm(x, weight, eps=1e-6):  # x：输入张量；weight：缩放参数；eps：稳定小量\n    return x * (x.square().mean(-1, keepdim=True) + eps).rsqrt() * weight",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM08 · LayerNorm / RMSNorm\n# Shape / 公式：x[...,D]；gamma/beta/weight[D]\n# 请从零实现：layer_norm、rms_norm\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "layer_norm",
+        "rms_norm"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现 `layer_norm(x, gamma, beta, eps=1e-5)` 与 `rms_norm(x, weight, eps=1e-6)`，两者都在输入 `x[...,D]` 的最后一维上进行归一化。",
+        "`layer_norm` 需要使用最后一维的均值和方差，并应用参数 `gamma[D]`、`beta[D]`；`rms_norm` 使用均方根尺度且不减去均值，并应用 `weight[D]`。",
+        "两个函数都应返回与 `x` 形状相同的张量，并通过 `eps` 避免数值不稳定。"
+      ],
+      "trackSequence": 8
+    },
+    {
+      "id": "mm-59",
+      "sequence": 109,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Softmax + Cross Entropy（手写稳定版）",
+      "category": "数值稳定 / Loss",
+      "tags": [
+        "数值稳定",
+        "Loss"
+      ],
+      "approach": "先减去每行最大值稳定计算，softmax 将指数值归一化，cross_entropy 则提取正确类别的对数概率并取负均值。",
+      "inputContract": "logits[N,C], y[N] -> scalar loss",
+      "complexity": "O(NC)。实战优先 F.cross_entropy；手撕时要明确“减最大值”是数值稳定关键。",
+      "referenceCode": "def softmax(x):  # x：原始分数，沿最后一维计算概率\n    x = x - x.max(-1, keepdim=True).values\n    prob = x.exp()  # prob：尚未归一化的指数权重\n    return prob / prob.sum(-1, keepdim=True)\n\ndef cross_entropy(logits, y):  # logits：类别分数 [N,C]；y：正确类别下标 [N]\n    logits = logits - logits.max(-1, keepdim=True).values\n    log_prob = logits - logits.exp().sum(-1, keepdim=True).log()  # log_prob：各类别的对数概率\n    return -log_prob.gather(-1, y[:, None]).mean()",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM09 · Softmax + Cross Entropy（手写稳定版）\n# Shape / 公式：logits[N,C], y[N] -> scalar loss\n# 请从零实现：softmax、cross_entropy\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "softmax",
+        "cross_entropy"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现数值稳定的 `softmax(x)`，沿输入张量的最后一维计算概率，输出与 `x` 形状相同且每行概率和为 `1`。",
+        "实现 `cross_entropy(logits, y)`，其中 `logits[N,C]` 为分类分数，`y[N]` 为每个样本的类别下标，返回批次平均的标量交叉熵。",
+        "实现应能处理绝对值很大的 `logits`，避免指数运算溢出或产生非有限结果。"
+      ],
+      "trackSequence": 9
+    },
+    {
+      "id": "mm-60",
+      "sequence": 110,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Top-k / Top-p Sampling",
+      "category": "LLM 解码 / Sampling",
+      "tags": [
+        "LLM 解码",
+        "Sampling"
+      ],
+      "approach": "将 logits 除以 temp，按 top_k 保留高分项、按 top_p 保留累计概率达阈值的最短前缀，再用 multinomial 抽样。",
+      "inputContract": "logits[B,V] -> next_token[B,1]",
+      "complexity": "Top-k 约 O(V log k)，Top-p 需要排序约 O(V log V)。T<1 更确定，T>1 更随机。",
+      "referenceCode": "import torch\n\n# logits：词表分数；temp：温度；top_k：候选数上限；top_p：累计概率阈值\ndef sample(logits, temp=1.0, top_k=None, top_p=None):\n    logits = logits / temp\n    if top_k is not None:\n        # value：前 k 大分数；index：它们的原词表下标\n        value, index = logits.topk(min(top_k, logits.size(-1)), dim=-1)\n        logits = torch.full_like(logits, -float('inf')).scatter(-1, index, value)\n    if top_p is not None:\n        # value：降序分数；index：排序后的原词表下标\n        value, index = logits.sort(descending=True)\n        prob = value.softmax(-1)  # prob：按分数降序排列的概率\n        mask = prob.cumsum(-1) - prob >= top_p  # mask：此前累计概率已达阈值的项，True 表示屏蔽\n        mask[..., 0] = False\n        value = value.masked_fill(mask, -float('inf'))\n        logits = torch.full_like(logits, -float('inf')).scatter(-1, index, value)\n    return torch.multinomial(logits.softmax(-1), 1)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM10 · Top-k / Top-p Sampling\n# Shape / 公式：logits[B,V] -> next_token[B,1]\n# 请从零实现：sample\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "sample"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `sample(logits, temp=1.0, top_k=None, top_p=None)`，从每个批次样本的词表分布中随机采样一个 token。输入 `logits[B,V]`，返回下标张量 `next_token[B,1]`。",
+        "使用正温度 `temp` 调整分布；`top_k` 非空时只保留分数最高的至多 `k` 个 token；`top_p` 非空时只保留按概率从高到低累计达到阈值所需的最小候选集合。",
+        "参数为 `None` 时对应过滤不启用；若两种过滤同时给出，应在同一次采样中共同生效。"
+      ],
+      "trackSequence": 10
+    },
+    {
+      "id": "mm-61",
+      "sequence": 111,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "LoRA Linear",
+      "category": "PEFT / 低秩微调",
+      "tags": [
+        "PEFT",
+        "低秩微调"
+      ],
+      "approach": "冻结 base，让 x 经低秩矩阵 A 降维、B 升维，并将乘以 alpha/r 的增量加到原线性层输出上。",
+      "inputContract": "A[r,din], B[dout,r]；额外参数 r(din+dout)",
+      "complexity": "训练参数为 r(din+dout)。base 需传入已加载预训练权重的 nn.Linear；A 随机、B=0，使初始增量为 0。",
+      "referenceCode": "import torch.nn as nn\n\nclass LoRALinear(nn.Module):\n    # base：原线性层；r：低秩维度；alpha：缩放系数的分子\n    def __init__(self, base, r=8, alpha=16):\n        super().__init__()\n        # self.base：冻结的原层；self.scale：增量缩放系数\n        self.base, self.scale = base.requires_grad_(False), alpha / r\n        # A：降维矩阵 [r,输入维度]\n        self.A = nn.Parameter(base.weight.new_empty(r, base.in_features))\n        # B：升维矩阵 [输出维度,r]，初值为 0\n        self.B = nn.Parameter(base.weight.new_zeros(base.out_features, r))\n        nn.init.kaiming_uniform_(self.A, a=5 ** 0.5)\n    def forward(self, x):  # x：输入张量，最后一维为输入特征数\n        return self.base(x) + self.scale * (x @ self.A.T @ self.B.T)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM11 · LoRA Linear\n# Shape / 公式：A[r,din], B[dout,r]；额外参数 r(din+dout)\n# 请从零实现：LoRALinear\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "LoRALinear"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现继承自 `nn.Module` 的 `LoRALinear`。构造函数 `LoRALinear(base, r=8, alpha=16)` 接收一个已有线性层 `base`，并冻结它的原始参数。",
+        "新增低秩参数 `A[r,din]` 与 `B[dout,r]`。对任意末维为 `din` 的输入 `x`，返回基础线性层输出与缩放后的低秩增量之和，缩放系数为 `alpha/r`。",
+        "输出形状应与调用 `base(x)` 时一致，新增可训练参数量为 `r(din+dout)`。"
+      ],
+      "trackSequence": 11
+    },
+    {
+      "id": "mm-62",
+      "sequence": 112,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "DPO / GRPO 基础 Loss",
+      "category": "Post-training / RL",
+      "tags": [
+        "Post-training",
+        "RL"
+      ],
+      "approach": "DPO 对扣除参考模型差值后的偏好对数概率差应用负 logsigmoid，GRPO 则标准化组内奖励并用裁剪概率比计算损失。",
+      "inputContract": "DPO 输入为 sequence logp；GRPO 简化版 new/old_logp[G,T], reward[G]",
+      "complexity": "这里是面试手撕的核心简化式。真实 GRPO 还常包含 token mask、reference KL / KL penalty、多个 prompt group。",
+      "referenceCode": "import torch\nimport torch.nn.functional as F\n\n# pi_c/pi_r：策略模型偏好/非偏好回答的对数概率\ndef dpo_loss(pi_c, pi_r, ref_c, ref_r, beta=0.1):\n    # ref_c/ref_r：参考模型的对应对数概率；beta：偏好强度\n    return -F.logsigmoid(beta * ((pi_c - pi_r) - (ref_c - ref_r))).mean()\n\n# new_logp/old_logp：新旧 token 对数概率；reward：组内奖励；eps：裁剪宽度\ndef grpo_loss(new_logp, old_logp, reward, eps=0.2):\n    # adv：标准化奖励，即组内优势 [G,1]\n    adv = ((reward - reward.mean()) / (reward.std(unbiased=False) + 1e-8))[:, None]\n    ratio = (new_logp - old_logp).exp()  # ratio：新策略概率 / 旧策略概率\n    return -torch.minimum(ratio * adv, ratio.clamp(1 - eps, 1 + eps) * adv).mean()",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM12 · DPO / GRPO 基础 Loss\n# Shape / 公式：DPO 输入为 sequence logp；GRPO 简化版 new/old_logp[G,T], reward[G]\n# 请从零实现：dpo_loss、grpo_loss\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "dpo_loss",
+        "grpo_loss"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现 `dpo_loss(pi_c, pi_r, ref_c, ref_r, beta=0.1)`。四个输入分别是策略模型和参考模型对偏好回答、非偏好回答的序列对数概率，形状应一致；返回批次平均的标量 DPO 损失。",
+        "DPO 的比较量为策略模型的偏好对数概率差相对于参考模型对应差值的提升，并使用系数 `beta`。",
+        "实现简化函数 `grpo_loss(new_logp, old_logp, reward, eps=0.2)`，其中两组 token 对数概率形状为 `[G,T]`，组内奖励为 `reward[G]`。使用组内标准化奖励和裁剪范围 `1±eps`，返回所有样本与 token 上平均的标量目标损失。"
+      ],
+      "trackSequence": 12
+    },
+    {
+      "id": "mm-63",
+      "sequence": 113,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Cosine Similarity + Retrieval Top-K",
+      "category": "多模态检索 / Embedding",
+      "tags": [
+        "多模态检索",
+        "Embedding"
+      ],
+      "approach": "将 q 和 gallery 沿特征维归一化，矩阵相乘得到余弦相似度，再为每个查询取前 k 个分数及下标。",
+      "inputContract": "q[B,D], gallery[N,D] -> sim[B,N] -> score/idx[B,k]",
+      "complexity": "暴力检索 O(BND)，显存 O(BN)。N 很大时改用 FAISS / IVF / HNSW 等 ANN 索引。",
+      "referenceCode": "import torch.nn.functional as F\n\n# q：查询向量 [B,D]；gallery：候选库 [N,D]；k：返回候选数\ndef retrieve(q, gallery, k):\n    q, gallery = F.normalize(q, dim=-1), F.normalize(gallery, dim=-1)\n    return (q @ gallery.T).topk(k, dim=-1)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM13 · Cosine Similarity + Retrieval Top-K\n# Shape / 公式：q[B,D], gallery[N,D] -> sim[B,N] -> score/idx[B,k]\n# 请从零实现：retrieve\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "retrieve"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现函数 `retrieve(q, gallery, k)`。查询向量 `q` 的形状为 `[B,D]`，候选库 `gallery` 的形状为 `[N,D]`。",
+        "以余弦相似度衡量每个查询与所有候选的匹配程度，并为每个查询选出分数最高的 `k` 个候选。",
+        "返回 `(score, idx)`，两者形状均为 `[B,k]`；`score` 按从高到低排列，`idx` 是对应候选在 `gallery` 中的下标。"
+      ],
+      "trackSequence": 13
+    },
+    {
+      "id": "mm-64",
+      "sequence": 114,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "IoU + NMS",
+      "category": "视觉检测 / Grounding",
+      "tags": [
+        "视觉检测",
+        "Grounding"
+      ],
+      "approach": "用交集面积除以并集面积计算 IoU，再按 scores 从高到低选框并删除与已选框 IoU 大于 thr 的候选框。",
+      "inputContract": "boxes[N,4]=(x1,y1,x2,y2), scores[N] -> keep indices",
+      "complexity": "朴素 NMS 最坏 O(N²)。这里按连续坐标定义面积，不加 +1。",
+      "referenceCode": "import torch\n\ndef iou(box, boxes):  # box：当前框 [4]；boxes：其他框 [N,4]，均为左上/右下坐标\n    left = torch.maximum(box[:2], boxes[:, :2])  # left：交集左上角坐标\n    right = torch.minimum(box[2:], boxes[:, 2:])  # right：交集右下角坐标\n    inter = (right - left).clamp(min=0).prod(-1)  # inter：交集面积\n    area = (box[2:] - box[:2]).prod(-1)  # area：当前框面积\n    areas = (boxes[:, 2:] - boxes[:, :2]).prod(-1)  # areas：其他各框的面积\n    return inter / (area + areas - inter + 1e-8)\n\ndef nms(boxes, scores, thr=0.5):  # boxes：候选框；scores：置信度；thr：IoU 抑制阈值\n    # index：按分数降序的待选下标；ans：保留下标列表\n    index, ans = scores.argsort(descending=True), []\n    while index.numel():\n        i = index[0]  # i：当前最高分框的原始下标\n        ans.append(i.item())\n        index = index[1:]\n        index = index[iou(boxes[i], boxes[index]) <= thr]\n    return ans",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM14 · IoU + NMS\n# Shape / 公式：boxes[N,4]=(x1,y1,x2,y2), scores[N] -> keep indices\n# 请从零实现：iou、nms\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "iou",
+        "nms"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现 `iou(box, boxes)`，其中单个框 `box[4]` 和候选框 `boxes[N,4]` 均采用连续坐标 `(x1,y1,x2,y2)`。返回 `box` 与每个候选框的 IoU 向量 `[N]`，面积计算不额外加 `1`。",
+        "实现 `nms(boxes, scores, thr=0.5)`。按照置信度从高到低选择检测框，并移除与已选框 IoU 大于 `thr` 的其余框。",
+        "`nms` 返回保留框在原始 `boxes` 中的下标列表，下标顺序与框被选中的先后顺序一致。"
+      ],
+      "trackSequence": 14
+    },
+    {
+      "id": "mm-65",
+      "sequence": 115,
+      "lc": null,
+      "track": "multimodal",
+      "runtime": "pytorch",
+      "judgeMode": "structure",
+      "title": "Patch Embedding / Visual Projector",
+      "category": "ViT / VLM 接口",
+      "tags": [
+        "ViT",
+        "VLM 接口"
+      ],
+      "approach": "用卷积核和步长均为 patch 的卷积将图像切块并映射为视觉特征，再展平为 token 并通过两层投影对齐语言模型维度。",
+      "inputContract": "img[B,3,H,W] -> patch[B,Dv,H/P,W/P] -> token[B,N,Dv] -> [B,N,Dllm]",
+      "complexity": "N=(H/P)·(W/P)。Projector 的任务是对齐视觉特征维度与 LLM embedding 空间；多模态 SFT 还要同步构造 attention_mask / labels。",
+      "referenceCode": "import torch.nn as nn\n\nclass VisionAdapter(nn.Module):\n    # patch：图像块边长；dv：视觉维度；dllm：语言模型维度\n    def __init__(self, patch=14, dv=1024, dllm=4096):\n        super().__init__()\n        # self.patch：切块并映射为视觉特征的卷积层\n        self.patch = nn.Conv2d(3, dv, patch, patch)\n        # self.proj：视觉维度 → 语言模型维度的投影器\n        self.proj = nn.Sequential(nn.Linear(dv, dllm), nn.GELU(), nn.Linear(dllm, dllm))\n    def forward(self, img):  # img：输入图像 [B,3,H,W]\n        # x：展平后的视觉 token [B,N,dv]；N：图像块数\n        x = self.patch(img).flatten(2).transpose(1, 2)\n        return self.proj(x)",
+      "starterCode": "import math\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# MM15 · Patch Embedding / Visual Projector\n# Shape / 公式：img[B,3,H,W] -> patch[B,Dv,H/P,W/P] -> token[B,N,Dv] -> [B,N,Dllm]\n# 请从零实现：VisionAdapter\n\n# 在这里完成你的实现\n",
+      "sampleInput": "",
+      "expectedOutput": "",
+      "normalizer": "trim",
+      "requiredSymbols": [
+        "VisionAdapter"
+      ],
+      "runtimeHint": "网页提供 Python 语法与接口检查；张量数值测试请在本地 PyTorch 环境运行。",
+      "statement": [
+        "实现继承自 `nn.Module` 的视觉适配器 `VisionAdapter`，构造函数为 `VisionAdapter(patch=14, dv=1024, dllm=4096)`。",
+        "`forward(img)` 接收图像张量 `img[B,3,H,W]`，将其划分为边长为 `patch` 的不重叠图像块，并把每个图像块映射为 `dv` 维视觉 token。",
+        "将视觉 token 的最后一维继续投影到语言模型维度 `dllm`，返回 `[B,N,dllm]`，其中在 `H`、`W` 可被 `patch` 整除时，`N=(H/patch)×(W/patch)`。"
+      ],
+      "trackSequence": 15
+    }
+  ],
+  "answerEdition": "精简注释版 · Hot 100 / main",
+  "answerConventions": [
+    "数组 nums，元素 x，下标 i；数量 n，目标 target，答案 ans。",
+    "双指针和二分统一 left / right / mid；滑窗计数 cnt，前缀和 prefix。",
+    "链表 head / cur / prev / nxt，快慢指针 slow / fast；合并统一 merge(a, b)。",
+    "树节点 node、根 root，队列 q、栈 stack；回溯统一 dfs / start / path / ans。",
+    "网格 grid，行列 row / col，相邻格 nr / nc，方向 dr / dc。",
+    "注意力 q / k / v / score，批次 B、长度 L、维度 D；True 表示有效键。",
+    "保留核心算法与必要复杂度，统一模板优先；不以压成一行来换取更短代码。",
+    "链表与二叉树沿用网站自动注入的公共模板；导出 JSON 包含完整 prelude。",
+    "主要变量在首次定义或函数参数旁附简短中文注释；同名变量按本题实际用途解释。"
+  ],
+  "hot100Source": {
+    "url": "https://leetcode.cn/studyplan/top-100-liked/",
+    "checkedOn": "2026-10-26",
+    "ids": [
+      1,
+      49,
+      128,
+      283,
+      11,
+      15,
+      42,
+      3,
+      438,
+      560,
+      239,
+      76,
+      53,
+      56,
+      189,
+      238,
+      41,
+      73,
+      54,
+      48,
+      240,
+      160,
+      206,
+      234,
+      141,
+      142,
+      21,
+      2,
+      19,
+      24,
+      25,
+      138,
+      148,
+      23,
+      146,
+      94,
+      104,
+      226,
+      101,
+      543,
+      102,
+      108,
+      98,
+      230,
+      199,
+      114,
+      105,
+      437,
+      236,
+      124,
+      200,
+      994,
+      207,
+      208,
+      46,
+      78,
+      17,
+      39,
+      22,
+      79,
+      131,
+      51,
+      35,
+      74,
+      34,
+      33,
+      153,
+      4,
+      20,
+      155,
+      394,
+      739,
+      84,
+      215,
+      347,
+      295,
+      121,
+      55,
+      45,
+      763,
+      70,
+      118,
+      198,
+      279,
+      322,
+      139,
+      300,
+      152,
+      416,
+      32,
+      62,
+      64,
+      5,
+      1143,
+      72,
+      136,
+      169,
+      75,
+      31,
+      287
+    ]
+  }
+}
