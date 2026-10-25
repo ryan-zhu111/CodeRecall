@@ -41,6 +41,54 @@ const data = JSON.parse(fs.readFileSync('public/problems.json', 'utf8'));
 const problems = data.problems.filter((p) => p.track === 'leetcode');
 const ids = new Set(problems.map((p) => p.id));
 const now = new Date('2026-10-26T02:00:00Z');
+const skipPool = problems.slice(0, 3);
+let skipped = m.editAttempt(
+  m.startSession(m.emptyMemory(), skipPool, 0, 1, now),
+  '# unfinished draft',
+);
+const beforeSkip = skipped;
+skipped = m.skipAttempt(skipped, data.problems, now);
+assert.equal(
+  skipped.session.attempt.problemId,
+  skipPool[1].id,
+  'one-question round gets the next question',
+);
+assert.equal(skipped.session.index, 0, 'skipping is not completion');
+assert.equal(skipped.cards, beforeSkip.cards, 'skip does not change FSRS');
+assert.equal(
+  skipped.reviews,
+  beforeSkip.reviews,
+  'skip adds no review or hint',
+);
+assert.equal(skipped.skippedDrafts[skipPool[0].id], '# unfinished draft');
+skipped = m.parseMemory(JSON.stringify(skipped), ids);
+skipped = m.skipAttempt(skipped, data.problems, now);
+assert.equal(
+  skipped.session.attempt.problemId,
+  skipPool[2].id,
+  'refresh preserves skipped IDs and selected pool',
+);
+skipped = m.skipAttempt(skipped, data.problems, now);
+assert.equal(
+  m.parseMemory(JSON.stringify(skipped), ids).session.attempt,
+  null,
+  'exhausted pool ends the round',
+);
+assert.equal(
+  m.startSession(skipped, skipPool, 0, 1, now).session.attempt.code,
+  skipPool[0].starterCode,
+  'next round starts blank and includes skipped questions',
+);
+const hintedSkip = m.revealHint(
+  m.startSession(m.emptyMemory(), skipPool, 0, 1, now),
+  'approach',
+  now,
+);
+assert.equal(
+  m.skipAttempt(hintedSkip, data.problems, now).reviews,
+  hintedSkip.reviews,
+  'skip preserves existing hint record',
+);
 let s = m.startSession(m.emptyMemory(), problems, 0, 2, now);
 assert.equal(s.session.attempt.code, problems[0].starterCode);
 assert.equal(s.session.queue.length, 2);

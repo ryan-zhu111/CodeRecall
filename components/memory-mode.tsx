@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   RotateCcw,
+  SkipForward,
   Upload,
 } from 'lucide-react';
 import { BrandMark } from '@/components/brand-mark';
@@ -34,6 +35,7 @@ import {
   previewGrades,
   revealHint,
   startSession,
+  skipAttempt,
   type Grade,
   type MemoryProblem,
   type MemoryStore,
@@ -330,6 +332,19 @@ export function MemoryMode({
       );
     }
   }
+  function skip() {
+    stopRun();
+    const ok = commit((s) => skipAttempt(s, problems, new Date()));
+    if (!ok) return;
+    setResult(idle);
+    const hasNext = !!storeRef.current?.session?.attempt;
+    setActive(hasNext);
+    setNotice(
+      hasNext
+        ? '已跳过本题，草稿已暂存。本轮不再出现，不新增评分；已有提示记录保留。'
+        : '本轮已结束，当前范围没有更多可补充的题目。跳过的题目仍可在下一轮学习，草稿已暂存。',
+    );
+  }
   function run(allTests: boolean) {
     if (!problem || !attempt || (!structureMode && !tests)) return;
     stopRun();
@@ -488,6 +503,17 @@ export function MemoryMode({
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={skip}
+                title="仅本轮跳过，暂存草稿，不新增评分"
+              >
+                <SkipForward className="size-4" />
+                跳过本轮
+              </Button>
+            )}
+            {active && (
+              <Button
+                size="sm"
+                variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="保存并暂停"
                 title="保存并暂停"
@@ -602,6 +628,8 @@ export function MemoryMode({
                     {store.session!.queue.length} 题，当前为{' '}
                     {problem ? memoryLabel(problem) : ''} · {problem?.title}
                     。草稿、提示记录和已安排的复习时间都会保留。
+                    {!!store.session?.skipped?.length &&
+                      ` 本轮已跳过 ${store.session.skipped.length} 题，不计入完成数量。`}
                   </p>
                   <Button
                     className="h-11 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -862,6 +890,37 @@ export function MemoryMode({
               )}
             </div>
           </section>
+          {!!Object.keys(store.skippedDrafts ?? {}).length && (
+            <details className="mt-8 rounded-xl border p-5">
+              <summary className="cursor-pointer text-sm font-medium">
+                跳过的草稿 · {Object.keys(store.skippedDrafts!).length} 题
+              </summary>
+              <p className="mt-3 text-xs leading-6 text-muted-foreground">
+                保留每题最近一次跳过时的代码；下一轮仍从空白默写，完成该题评分后删除暂存草稿。
+              </p>
+              {problems
+                .filter((p) => Object.hasOwn(store.skippedDrafts!, p.id))
+                .map((p) => (
+                  <details key={p.id} className="mt-4 border-t pt-4">
+                    <summary className="cursor-pointer text-sm">
+                      {memoryLabel(p)} · {p.title}
+                    </summary>
+                    <Suspense
+                      fallback={
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          正在加载草稿…
+                        </p>
+                      }
+                    >
+                      <PythonCodeBlock
+                        code={store.skippedDrafts![p.id] || '# 空白草稿'}
+                        className="mt-3 max-h-80 rounded-lg p-4"
+                      />
+                    </Suspense>
+                  </details>
+                ))}
+            </details>
+          )}
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t pt-6 text-xs text-muted-foreground">
             <div className="max-w-xl leading-6">
               <p>
@@ -895,12 +954,25 @@ export function MemoryMode({
         </div>
       ) : (
         <>
+          {notice && (
+            <p
+              role="status"
+              className="mx-auto max-w-[1600px] bg-accent px-5 py-3 text-sm text-accent-foreground"
+            >
+              {notice}
+            </p>
+          )}
           <div className="border-b bg-background">
             <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-5 py-3 lg:px-8">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium tabular-nums">
                   第 {store.session!.index + 1} / {store.session!.queue.length}{' '}
                   题
+                  {!!store.session?.skipped?.length && (
+                    <span className="ml-3 text-xs font-normal text-muted-foreground">
+                      已跳过 {store.session.skipped.length} 题
+                    </span>
+                  )}
                 </span>
                 <div
                   className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:block"

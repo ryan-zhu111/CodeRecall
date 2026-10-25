@@ -66,6 +66,8 @@ export type Attempt = {
 };
 export type Session = {
   queue: string[];
+  pool?: string[];
+  skipped?: string[];
   index: number;
   startedAt: string;
   attempt: Attempt | null;
@@ -75,6 +77,7 @@ export type MemoryStore = {
   revision: string;
   cards: Record<string, SavedCard>;
   reviews: Review[];
+  skippedDrafts?: Record<string, string>;
   session: Session | null;
 };
 
@@ -146,6 +149,8 @@ export function startSession(
     ...store,
     session: {
       queue,
+      pool: problems.map((p) => p.id),
+      skipped: [],
       index: 0,
       startedAt: stamp(now),
       attempt: freshAttempt(first, now),
@@ -170,6 +175,45 @@ export function editAttempt(
         tests: 0,
         validation: undefined,
       },
+    },
+  };
+}
+export function skipAttempt(
+  store: MemoryStore,
+  problems: MemoryProblem[],
+  now: Date,
+): MemoryStore {
+  const session = store.session;
+  const attempt = session?.attempt;
+  if (!session || !attempt) return store;
+  const skipped = [...(session.skipped ?? []), attempt.problemId];
+  const queue = session.queue.filter((id) => id !== attempt.problemId);
+  // Older saved rounds did not record their pool; stay within their tracks.
+  const tracks = new Set(
+    problems.filter((p) => session.queue.includes(p.id)).map((p) => p.track),
+  );
+  const pool = problems.filter((p) =>
+    session.pool ? session.pool.includes(p.id) : tracks.has(p.track),
+  );
+  const excluded = new Set([...queue, ...skipped]);
+  const replacement = [
+    ...dueIds(store, pool, now),
+    ...pool.filter((p) => !store.cards[p.id]).map((p) => p.id),
+  ].find((id) => !excluded.has(id));
+  if (replacement) queue.push(replacement);
+  const next = problems.find((p) => p.id === queue[session.index]);
+  return {
+    ...store,
+    skippedDrafts: {
+      ...store.skippedDrafts,
+      [attempt.problemId]: attempt.code,
+    },
+    session: {
+      ...session,
+      queue,
+      pool: pool.map((p) => p.id),
+      skipped,
+      attempt: next ? freshAttempt(next, now) : null,
     },
   };
 }
@@ -280,8 +324,13 @@ export function finishAttempt(
   if (!session?.attempt?.recorded) return store;
   const index = session.index + 1;
   const problem = problems.find((p) => p.id === session.queue[index]);
+  const skippedDrafts = next.skippedDrafts
+    ? { ...next.skippedDrafts }
+    : undefined;
+  if (skippedDrafts) delete skippedDrafts[session.attempt.problemId];
   return {
     ...next,
+    ...(skippedDrafts ? { skippedDrafts } : {}),
     session: {
       ...session,
       index,
@@ -338,6 +387,16 @@ export function parseMemory(raw: string, validIds: Set<string>): MemoryStore {
       throw new Error('学习卡片数据不完整');
   }
   const ids = new Set<string>();
+  if (
+    data.skippedDrafts !== undefined &&
+    (!data.skippedDrafts ||
+      typeof data.skippedDrafts !== 'object' ||
+      Array.isArray(data.skippedDrafts) ||
+      !Object.entries(data.skippedDrafts).every(
+        ([id, code]) => validIds.has(id) && typeof code === 'string',
+      ))
+  )
+    throw new Error('跳过的草稿数据不完整');
   for (const r of data.reviews) {
     if (
       !r ||
@@ -362,7 +421,7 @@ export function parseMemory(raw: string, validIds: Set<string>): MemoryStore {
     if (
       !s ||
       !Array.isArray(s.queue) ||
-      !s.queue.length ||
+      (!s.queue.length && !(Array.isArray(s.skipped) && s.skipped.length)) ||
       new Set(s.queue).size !== s.queue.length ||
       !s.queue.every((id: string) => validIds.has(id)) ||
       !Number.isInteger(s.index) ||
@@ -371,6 +430,23 @@ export function parseMemory(raw: string, validIds: Set<string>): MemoryStore {
       !validDate(s.startedAt)
     )
       throw new Error('学习队列数据不完整');
+    for (const list of [s.pool, s.skipped]) {
+      if (
+        list !== undefined &&
+        (!Array.isArray(list) ||
+          new Set(list).size !== list.length ||
+          !list.every((id: string) => validIds.has(id)))
+      )
+        throw new Error('跳过题目或本轮范围不正确');
+    }
+    if (
+      (s.skipped ?? []).some((id: string) => s.queue.includes(id)) ||
+      (s.pool &&
+        [...s.queue, ...(s.skipped ?? [])].some(
+          (id: string) => !s.pool.includes(id),
+        ))
+    )
+      throw new Error('跳过题目与学习队列冲突');
     const a = s.attempt;
     if (s.index < s.queue.length) {
       if (
