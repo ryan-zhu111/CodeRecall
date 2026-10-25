@@ -1,7 +1,8 @@
 name: Deploy GitHub Pages
 
-# Deployment is manual. Publishing the source does not enable a new hosted site.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
