@@ -64,7 +64,7 @@ npm run preview
 
 1. Fork 或将项目推送到自己的仓库。
 2. 在仓库 **Settings → Pages → Source** 中选择 **GitHub Actions**。
-3. 在 **Actions** 中手动运行 Pages 部署工作流，完成后访问工作流给出的地址。
+3. 推送或合并更新到 `main` 分支后，会自动构建并部署网站；完成后访问工作流给出的地址。也可以在 **Actions → Deploy GitHub Pages** 中点击 **Run workflow** 手动部署。
 
 工作流会设置项目子路径。自行构建到子目录时，设置 `BASE_PATH`，并以 `/` 开头和结尾，例如 `/CodeRecall/`：
 
