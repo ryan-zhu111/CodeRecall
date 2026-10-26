@@ -230,7 +230,7 @@ export function addSessionProblems(
     session: {
       ...session,
       queue: [...session.queue, ...added],
-      // Keep the original automatic replacement pool and include explicit additions.
+      // Keep the saved round scope valid when manually adding outside questions.
       pool: [
         ...new Set([
           ...sessionPool(store, problems).map((p) => p.id),
@@ -260,12 +260,6 @@ export function skipAttempt(
   const skipped = [...(session.skipped ?? []), attempt.problemId];
   const queue = session.queue.filter((id) => id !== attempt.problemId);
   const pool = sessionPool(store, problems);
-  const excluded = new Set([...queue, ...skipped]);
-  const replacement = [
-    ...dueIds(store, pool, now),
-    ...pool.filter((p) => !store.cards[p.id]).map((p) => p.id),
-  ].find((id) => !excluded.has(id));
-  if (replacement) queue.push(replacement);
   const next = problems.find((p) => p.id === queue[session.index]);
   return {
     ...store,

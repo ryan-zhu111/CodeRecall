@@ -49,10 +49,11 @@ let skipped = m.editAttempt(
 const beforeSkip = skipped;
 skipped = m.skipAttempt(skipped, data.problems, now);
 assert.equal(
-  skipped.session.attempt.problemId,
-  skipPool[1].id,
-  'one-question round gets the next question',
+  skipped.session.attempt,
+  null,
+  'skipping the only scheduled question ends the round without replacement',
 );
+assert.equal(skipped.session.queue.length, 0, 'skip reduces this round by one');
 assert.equal(skipped.session.index, 0, 'skipping is not completion');
 assert.equal(skipped.cards, beforeSkip.cards, 'skip does not change FSRS');
 assert.equal(
@@ -62,17 +63,29 @@ assert.equal(
 );
 assert.equal(skipped.skippedDrafts[skipPool[0].id], '# unfinished draft');
 skipped = m.parseMemory(JSON.stringify(skipped), ids);
-skipped = m.skipAttempt(skipped, data.problems, now);
 assert.equal(
-  skipped.session.attempt.problemId,
-  skipPool[2].id,
-  'refresh preserves skipped IDs and selected pool',
-);
-skipped = m.skipAttempt(skipped, data.problems, now);
-assert.equal(
-  m.parseMemory(JSON.stringify(skipped), ids).session.attempt,
+  skipped.session.attempt,
   null,
-  'exhausted pool ends the round',
+  'refresh does not refill an ended round',
+);
+let multiSkip = m.startSession(m.emptyMemory(), skipPool, 0, 2, now);
+multiSkip = m.skipAttempt(multiSkip, data.problems, now);
+assert.deepEqual(
+  multiSkip.session.queue,
+  [skipPool[1].id],
+  'only the existing next question remains',
+);
+assert.equal(
+  multiSkip.session.attempt.problemId,
+  skipPool[1].id,
+  'skip continues the existing queue',
+);
+multiSkip = m.parseMemory(JSON.stringify(multiSkip), ids);
+multiSkip = m.skipAttempt(multiSkip, data.problems, now);
+assert.equal(
+  m.parseMemory(JSON.stringify(multiSkip), ids).session.attempt,
+  null,
+  'round ends even when more unlearned questions exist in the pool',
 );
 assert.equal(
   m.startSession(skipped, skipPool, 0, 1, now).session.attempt.code,

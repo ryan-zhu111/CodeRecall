@@ -355,8 +355,8 @@ export function MemoryMode({
     setActive(hasNext);
     setNotice(
       hasNext
-        ? '已跳过本题，草稿已暂存，不新增评分。可通过“添加题目”重新加入；已有提示记录保留。'
-        : '本轮已结束，草稿已暂存。可通过“添加题目”重新加入已跳过的题，或在下一轮学习。',
+        ? '已跳过本题，本轮题数减少 1，不自动补题。草稿已暂存，已有评分和复习安排保留；可通过“添加题目”重新加入。'
+        : '已跳过本题，本轮已无剩余题目，不自动补题。草稿已暂存；可通过“添加题目”继续本轮，或在下一轮学习。',
     );
   }
 
@@ -548,7 +548,7 @@ export function MemoryMode({
                 size="sm"
                 variant="ghost"
                 onClick={skip}
-                title="仅本轮跳过，暂存草稿，不新增评分"
+                title="移出本轮，题数减 1，不自动补题；暂存草稿，不新增评分"
               >
                 <SkipForward className="size-4" />
                 跳过本题
