@@ -48,6 +48,7 @@ import {
 } from '@/lib/editor-state';
 
 import { MemoryMode } from '@/components/memory-mode';
+import { HelperCodeDialog } from '@/components/helper-code-dialog';
 import { SolutionContent } from '@/components/solution-content';
 import {
   SolutionProvider,
@@ -1079,7 +1080,10 @@ function Workspace() {
                       : '空白模板'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {selected.track === 'leetcode' && (
+                <HelperCodeDialog code={payload.prelude} />
+              )}
               <span
                 id="editor-shortcuts"
                 className="hidden text-[11px] text-muted-foreground md:inline"

@@ -628,14 +628,14 @@
         "从新链表头开始依次输出所有节点值，以空格分隔。"
       ],
       "approach": "逐个用 nxt 暂存后继，让 cur 指向 prev 并推进两个指针，最后返回新的头节点 prev。",
-      "inputContract": "n；下一行 n 个值（复用附录链表模板）",
+      "inputContract": "n；下一行 n 个值（辅助函数由网站自动提供链表模板）",
       "complexity": "O(n) / O(1)",
       "referenceCode": "def reverse(head):  # head：待反转链表的头节点\n    prev, cur = None, head  # prev：已反转部分的头；cur：当前节点\n    while cur:\n        nxt = cur.next  # nxt：暂存原来的下一节点\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    print_list(reverse(head))\n\nmain()",
-      "starterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（复用附录链表模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供链表模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "5\n1 2 3 4 5\n",
       "expectedOutput": "5 4 3 2 1",
       "normalizer": "trim",
-      "inputStarterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（复用附录链表模板）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC206 · 反转链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供链表模板）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-234",
@@ -656,14 +656,14 @@
         "若节点值序列是回文则输出小写 `true`，否则输出小写 `false`。"
       ],
       "approach": "用 slow、fast 找到后半段起点，调用 reverse 反转后半段，再与前半段逐个比较节点值判断是否回文。",
-      "inputContract": "n；下一行 n 个值（复用附录）",
+      "inputContract": "n；下一行 n 个值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(1)",
       "referenceCode": "def reverse(head):  # head：待反转链表的头节点\n    prev, cur = None, head  # prev：已反转部分的头；cur：当前节点\n    while cur:\n        nxt = cur.next  # nxt：暂存原来的下一节点\n        cur.next = prev\n        prev, cur = cur, nxt\n    return prev\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    slow = fast = head  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n    cur = reverse(slow)  # cur：反转后半段的当前节点；head：前半段当前节点\n    while cur:\n        if head.val != cur.val:\n            print('false')\n            return\n        head, cur = head.next, cur.next\n    print('true')\n\nmain()",
-      "starterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "5\n1 2 3 2 1\n",
       "expectedOutput": "true",
       "normalizer": "trim",
-      "inputStarterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC234 · 回文链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-141",
@@ -740,14 +740,14 @@
         "从合并后链表的头节点开始依次输出所有节点值，以空格分隔。"
       ],
       "approach": "反复将 a、b 中较小的节点接到 cur 后面，最后接上未耗尽的链表并返回 dummy 后的合并结果。",
-      "inputContract": "n m；第2/3行两链表值（复用附录）",
+      "inputContract": "n m；第2/3行两链表值（辅助函数由网站自动提供）",
       "complexity": "O(n+m) / O(1)",
       "referenceCode": "def merge(a, b):  # a、b：两条待合并链表的当前节点\n    cur = dummy = Node()  # dummy：哑节点；cur：合并结果的尾节点\n    while a and b:\n        if a.val > b.val:\n            a, b = b, a\n        cur.next = a\n        a = a.next\n        cur = cur.next\n    cur.next = a or b\n    return dummy.next\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n    print_list(merge(a, b))\n\nmain()",
-      "starterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "3 3\n1 2 4\n1 3 4\n",
       "expectedOutput": "1 1 2 3 4 4",
       "normalizer": "trim",
-      "inputStarterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（复用附录）\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC21 · 合并两个有序链表\n# 输入：n m；第2/3行两链表值（辅助函数由网站自动提供）\n\ndef main():\n    n, m = map(int, input().split())  # n、m：两条链表的节点数\n    a = build_list(list(map(int, input().split())))  # a：第一条链表的头节点\n    b = build_list(list(map(int, input().split())))  # b：第二条链表的头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-2",
@@ -899,14 +899,14 @@
         "从排序后链表的头节点开始依次输出所有节点值，以空格分隔；相同数值均需保留。"
       ],
       "approach": "用 slow、fast 将链表从中间断开，递归排好两半后调用 merge 合成有序链表。",
-      "inputContract": "n；下一行 n 个值（复用附录）",
+      "inputContract": "n；下一行 n 个值（辅助函数由网站自动提供）",
       "complexity": "O(nlogn) / O(logn)",
       "referenceCode": "def merge(a, b):  # a、b：两条待合并链表的当前节点\n    cur = dummy = Node()  # dummy：哑节点；cur：合并结果的尾节点\n    while a and b:\n        if a.val > b.val:\n            a, b = b, a\n        cur.next = a\n        a = a.next\n        cur = cur.next\n    cur.next = a or b\n    return dummy.next\n\ndef sort_list(head):  # head：待排序链表的头节点\n    if not head or not head.next: return head\n    slow, fast = head, head.next  # slow：每次走一步；fast：每次走两步\n    while fast and fast.next:\n        slow, fast = slow.next, fast.next.next\n    mid, slow.next = slow.next, None  # mid：右半段头节点；从 slow 后断开\n    return merge(sort_list(head), sort_list(mid))\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n    print_list(sort_list(head))\n\nmain()",
-      "starterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "4\n4 2 1 3\n",
       "expectedOutput": "1 2 3 4",
       "normalizer": "trim",
-      "inputStarterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（复用附录）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC148 · 排序链表\n# 输入：n；下一行 n 个值（辅助函数由网站自动提供）\n\ndef main():\n    n = int(input())  # n：链表节点数\n    head = build_list(list(map(int, input().split())))  # head：链表头节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-23",
@@ -984,14 +984,14 @@
         "在一行中按访问顺序输出所有节点值；空树输出空行。"
       ],
       "approach": "用 stack 保存沿左子树经过的节点，依次弹栈输出节点值并转向右子树，完成左、根、右的中序遍历。",
-      "inputContract": "一行层序值，null 表示空（复用附录树模板）",
+      "inputContract": "一行层序值，null 表示空（辅助函数由网站自动提供树模板）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "def inorder(root):  # root：待遍历子树的根节点\n    stack, cur = [], root  # stack：待访问节点栈；cur：当前节点\n    while cur or stack:\n        while cur:\n            stack.append(cur)\n            cur = cur.left\n        cur = stack.pop()\n        yield cur.val\n        cur = cur.right\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(*inorder(root))\n\nmain()",
-      "starterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（复用附录树模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（辅助函数由网站自动提供树模板）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "1 null 2 3\n",
       "expectedOutput": "1 3 2",
       "normalizer": "trim",
-      "inputStarterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（复用附录树模板）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC94 · 二叉树中序遍历\n# 输入：一行层序值，null 表示空（辅助函数由网站自动提供树模板）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-104",
@@ -1012,14 +1012,14 @@
         "输出一个整数表示最大深度，空树的深度为 `0`。"
       ],
       "approach": "递归计算左右子树的深度，空节点返回 0，非空节点返回较大子树深度加 1。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "def depth(node):  # node：当前子树根节点\n    return 1 + max(depth(node.left), depth(node.right)) if node else 0\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(depth(root))\n\nmain()",
-      "starterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "3 9 20 null null 15 7\n",
       "expectedOutput": "3",
       "normalizer": "trim",
-      "inputStarterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC104 · 二叉树最大深度\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-226",
@@ -1068,14 +1068,14 @@
         "若整棵树对称则输出 `true`，否则输出 `false`；空树视为对称。"
       ],
       "approach": "递归检查 a、b 的值是否相等，并交叉比较左与右子树，空节点必须同时为空才互为镜像。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "def check(a, b):  # a、b：需要互为镜像的两个子树根节点\n    if not a or not b: return a is b\n    return a.val == b.val and check(a.left, b.right) and check(a.right, b.left)\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(str(check(root, root)).lower())\n\nmain()",
-      "starterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "1 2 2 3 4 4 3\n",
       "expectedOutput": "true",
       "normalizer": "trim",
-      "inputStarterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC101 · 对称二叉树\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-543",
@@ -1122,14 +1122,14 @@
         "每一层的节点值输出在单独一行，同层节点以空格分隔；空树输出空行。"
       ],
       "approach": "用队列 q 按层取出节点，把当前层的值收集到 vals 并让子节点入队，最后逐层输出。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(n)",
       "referenceCode": "from collections import deque\n\ndef levels(root):  # root：待遍历子树的根节点\n    q = deque([root]) if root else deque()  # q：按层存放待访问节点的队列\n    while q:\n        vals = []  # vals：当前层的节点值\n        for _ in range(len(q)):\n            node = q.popleft()  # node：当前出队节点\n            vals.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n        yield vals\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    for vals in levels(root):  # vals：当前层的节点值\n        print(*vals)\n\nmain()",
-      "starterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "3 9 20 null null 15 7\n",
       "expectedOutput": "3\n9 20\n15 7",
       "normalizer": "trim",
-      "inputStarterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC102 · 二叉树层序遍历\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-108",
@@ -1179,14 +1179,14 @@
         "输入为一行层序序列，`null` 表示空节点。合法时输出 `true`，否则输出 `false`。"
       ],
       "approach": "递归检查每个节点值严格位于 low、high 之间，并用当前值更新左子树的上界和右子树的下界。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "# node：当前节点；low、high：节点值的严格下界、上界\ndef check(node, low=-float('inf'), high=float('inf')):\n    if not node: return True\n    return low < node.val < high and check(node.left, low, node.val) and check(node.right, node.val, high)\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(str(check(root)).lower())\n\nmain()",
-      "starterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "2 1 3\n",
       "expectedOutput": "true",
       "normalizer": "trim",
-      "inputStarterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC98 · 验证二叉搜索树\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-230",
@@ -1207,14 +1207,14 @@
         "输出第 `k` 小的节点值。"
       ],
       "approach": "调用 inorder 按递增顺序生成节点值，枚举到第 k 个时输出并结束。",
-      "inputContract": "k；下一行层序值（复用附录）",
+      "inputContract": "k；下一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(h+k) / O(h)",
       "referenceCode": "def inorder(root):  # root：待遍历子树的根节点\n    stack, cur = [], root  # stack：待访问节点栈；cur：当前节点\n    while cur or stack:\n        while cur:\n            stack.append(cur)\n            cur = cur.left\n        cur = stack.pop()\n        yield cur.val\n        cur = cur.right\n\ndef main():\n    k = int(input())  # k：要找的排名（从 1 开始）\n    root = build_tree(input().split())  # root：二叉树根节点\n    for i, x in enumerate(inorder(root), 1):  # i：中序排名；x：当前节点值\n        if i == k:\n            print(x)\n            return\n\nmain()",
-      "starterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "1\n3 1 4 null 2\n",
       "expectedOutput": "1",
       "normalizer": "trim",
-      "inputStarterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（复用附录）\n\ndef main():\n    k = int(input())  # k：要找的中序排名\n    root = build_tree(input().split())  # root：二叉搜索树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC230 · BST 第 K 小元素\n# 输入：k；下一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    k = int(input())  # k：要找的中序排名\n    root = build_tree(input().split())  # root：二叉搜索树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-199",
@@ -1235,14 +1235,14 @@
         "在一行中按深度从小到大输出右视图中的节点值；空树输出空行。"
       ],
       "approach": "调用 levels 用队列逐层收集节点值，取每层 vals 的最后一个值组成右视图。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(n)",
       "referenceCode": "from collections import deque\n\ndef levels(root):  # root：待遍历子树的根节点\n    q = deque([root]) if root else deque()  # q：按层存放待访问节点的队列\n    while q:\n        vals = []  # vals：当前层的节点值\n        for _ in range(len(q)):\n            node = q.popleft()  # node：当前出队节点\n            vals.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n        yield vals\n\ndef main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    print(*(vals[-1] for vals in levels(root)))  # vals：当前层节点值；最后一个就是右视图节点\n\nmain()",
-      "starterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "1 2 3 null 5 null 4\n",
       "expectedOutput": "1 3 4",
       "normalizer": "trim",
-      "inputStarterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC199 · 二叉树右视图\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-114",
@@ -1319,14 +1319,14 @@
         "输入首行为 `target`，第二行为包含 `null` 标记的层序树；输出满足条件的路径总数。"
       ],
       "approach": "沿树累加 prefix，用 cnt 中 prefix - target 的次数统计当前节点结尾的路径，递归返回时撤销当前前缀和记录。",
-      "inputContract": "target；下一行层序树（复用附录）",
+      "inputContract": "target；下一行层序树（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "def main():\n    target = int(input())  # target：目标路径和\n    root = build_tree(input().split())  # root：二叉树根节点\n    cnt = {0: 1}  # cnt：当前祖先链的前缀和 → 次数；含空前缀\n    def dfs(node, prefix):  # node：当前节点；prefix：到父节点为止的前缀和\n        if not node: return 0\n        prefix += node.val  # prefix：更新为到当前节点为止的前缀和\n        ans = cnt.get(prefix - target, 0)  # ans：以当前节点结尾的目标路径数，随后累加子树结果\n        cnt[prefix] = cnt.get(prefix, 0) + 1\n        ans += dfs(node.left, prefix) + dfs(node.right, prefix)\n        cnt[prefix] -= 1\n        if cnt[prefix] == 0: del cnt[prefix]\n        return ans\n    print(dfs(root, 0))\n\nmain()",
-      "starterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "8\n10 5 -3 3 2 null 11 3 -2 null 1\n",
       "expectedOutput": "3",
       "normalizer": "trim",
-      "inputStarterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（复用附录）\n\ndef main():\n    target = int(input())  # target：目标路径和\n    root = build_tree(input().split())  # root：二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC437 · 路径总和 III\n# 输入：target；下一行层序树（辅助函数由网站自动提供）\n\ndef main():\n    target = int(input())  # target：目标路径和\n    root = build_tree(input().split())  # root：二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-236",
@@ -1375,14 +1375,14 @@
         "输入为一行二叉树层序序列，`null` 表示空节点；输出一个整数表示最大路径和。"
       ],
       "approach": "递归求左右子树的非负单边贡献，用两侧贡献加当前值更新 ans，再向父节点返回较大一侧加当前值。",
-      "inputContract": "一行层序值（复用附录）",
+      "inputContract": "一行层序值（辅助函数由网站自动提供）",
       "complexity": "O(n) / O(h)",
       "referenceCode": "def main():\n    root = build_tree(input().split())  # root：二叉树根节点\n    ans = -float('inf')  # ans：全局最大路径和\n    def dfs(node):  # node：当前节点；返回可向父节点延伸的单边贡献\n        nonlocal ans\n        if not node: return 0\n        # left、right：左右子树的非负单边贡献\n        left, right = max(0, dfs(node.left)), max(0, dfs(node.right))\n        ans = max(ans, node.val + left + right)\n        return node.val + max(left, right)\n    dfs(root)\n    print(ans)\n\nmain()",
-      "starterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（复用附录）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
+      "starterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    # 在这里完成你的解法\n    pass\n\nif __name__ == '__main__':\n    main()",
       "sampleInput": "-10 9 20 null null 15 7\n",
       "expectedOutput": "42",
       "normalizer": "trim",
-      "inputStarterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（复用附录）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
+      "inputStarterCode": "# LC124 · 二叉树中的最大路径和\n# 输入：一行层序值（辅助函数由网站自动提供）\n\ndef main():\n    root = build_tree(input().split())  # root：由层序输入构造的二叉树根节点\n\n    # 在这里完成解题逻辑并输出结果\n    pass\n\nmain()"
     },
     {
       "id": "lc-200",

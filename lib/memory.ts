@@ -178,6 +178,52 @@ export function editAttempt(
     },
   };
 }
+
+export function sessionPool(store: MemoryStore, problems: MemoryProblem[]) {
+  const session = store.session;
+  if (!session) return [];
+  // Old saved rounds only identify their scope through queued question tracks.
+  const tracks = new Set(
+    problems.filter((p) => session.queue.includes(p.id)).map((p) => p.track),
+  );
+  return problems.filter((p) =>
+    session.pool ? session.pool.includes(p.id) : tracks.has(p.track),
+  );
+}
+
+export function availableSessionNewProblems(
+  store: MemoryStore,
+  problems: MemoryProblem[],
+) {
+  const session = store.session;
+  if (!session?.attempt) return [];
+  const excluded = new Set([...session.queue, ...(session.skipped ?? [])]);
+  return sessionPool(store, problems).filter(
+    (p) => !store.cards[p.id] && !excluded.has(p.id),
+  );
+}
+
+export function addSessionNewProblems(
+  store: MemoryStore,
+  problems: MemoryProblem[],
+  ids: string[],
+): MemoryStore {
+  if (!store.session?.attempt) return store;
+  const eligible = new Set(
+    availableSessionNewProblems(store, problems).map((p) => p.id),
+  );
+  const added = [...new Set(ids)].filter((id) => eligible.has(id));
+  if (!added.length) return store;
+  return {
+    ...store,
+    session: {
+      ...store.session,
+      queue: [...store.session.queue, ...added],
+      pool: sessionPool(store, problems).map((p) => p.id),
+    },
+  };
+}
+
 export function skipAttempt(
   store: MemoryStore,
   problems: MemoryProblem[],
@@ -188,13 +234,7 @@ export function skipAttempt(
   if (!session || !attempt) return store;
   const skipped = [...(session.skipped ?? []), attempt.problemId];
   const queue = session.queue.filter((id) => id !== attempt.problemId);
-  // Older saved rounds did not record their pool; stay within their tracks.
-  const tracks = new Set(
-    problems.filter((p) => session.queue.includes(p.id)).map((p) => p.track),
-  );
-  const pool = problems.filter((p) =>
-    session.pool ? session.pool.includes(p.id) : tracks.has(p.track),
-  );
+  const pool = sessionPool(store, problems);
   const excluded = new Set([...queue, ...skipped]);
   const replacement = [
     ...dueIds(store, pool, now),

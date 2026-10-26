@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AppearanceControls } from '@/components/appearance-settings';
 import { ResetLearningDialog } from '@/components/reset-learning-dialog';
+import { HelperCodeDialog } from '@/components/helper-code-dialog';
+import { AddSessionQuestions } from '@/components/add-session-questions';
 import { SolutionContent } from '@/components/solution-content';
 import { useSolutions } from '@/components/solution-overrides';
 import { learningGeneration, isCurrentLearning } from '@/lib/learning-storage';
@@ -26,6 +28,8 @@ import {
   MEMORY_KEY,
   Rating,
   acceptAttempt,
+  addSessionNewProblems,
+  availableSessionNewProblems,
   dayKey,
   dueIds,
   editAttempt,
@@ -354,6 +358,23 @@ export function MemoryMode({
         : '本轮已结束，当前范围没有更多可补充的题目。跳过的题目仍可在下一轮学习，草稿已暂存。',
     );
   }
+
+  function addNewQuestions(ids: string[]) {
+    let count = 0;
+    const ok = commit((current) => {
+      const next = addSessionNewProblems(current, problems, ids);
+      count =
+        (next.session?.queue.length ?? 0) -
+        (current.session?.queue.length ?? 0);
+      return next;
+    });
+    if (!ok) return '未能加入本轮，请查看页面提示并重试。';
+    if (!count) return '所选题目已不可添加，请关闭后重新选择。';
+    setNotice(
+      `已将 ${count} 道新题追加到本轮末尾。当前默写和复习安排保持不变。`,
+    );
+    return null;
+  }
   function run(allTests: boolean) {
     if (!problem || !attempt || (!structureMode && !tests)) return;
     stopRun();
@@ -508,6 +529,13 @@ export function MemoryMode({
               className="mx-1 hidden h-5 w-px bg-border sm:block"
               aria-hidden="true"
             />
+            {attempt && (
+              <AddSessionQuestions
+                problems={availableSessionNewProblems(store, problems)}
+                disabled={!ready}
+                onAdd={addNewQuestions}
+              />
+            )}
             {active && (
               <Button
                 size="sm"
@@ -1149,6 +1177,9 @@ export function MemoryMode({
                   {structureMode ? 'PyTorch · 完整默写' : 'Python 3 · 完整默写'}
                 </span>
                 <div className="flex flex-wrap gap-2">
+                  {!structureMode && (
+                    <HelperCodeDialog code={payload.prelude} />
+                  )}
                   {problem.inputStarterCode && (
                     <Button
                       size="sm"
