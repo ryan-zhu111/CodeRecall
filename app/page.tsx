@@ -42,13 +42,17 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   draftKey,
   getEditorCode,
-  getReference,
   migrateDrafts,
   type EditorDraft,
   type EditorDrafts,
 } from '@/lib/editor-state';
 
 import { MemoryMode } from '@/components/memory-mode';
+import { SolutionContent } from '@/components/solution-content';
+import {
+  SolutionProvider,
+  useSolutions,
+} from '@/components/solution-overrides';
 import { AppearanceControls } from '@/components/appearance-settings';
 import { BrandMark } from '@/components/brand-mark';
 import {
@@ -64,11 +68,6 @@ import {
 const PythonEditor = lazy(() =>
   import('@/components/python-editor').then((m) => ({
     default: m.PythonEditor,
-  })),
-);
-const PythonCodeBlock = lazy(() =>
-  import('@/components/python-code-block').then((m) => ({
-    default: m.PythonCodeBlock,
   })),
 );
 
@@ -188,6 +187,15 @@ function normalizeOutput(value: string, mode: Normalizer) {
 }
 
 export default function Home() {
+  return (
+    <SolutionProvider>
+      <Workspace />
+    </SolutionProvider>
+  );
+}
+
+function Workspace() {
+  const { overrides } = useSolutions();
   const [payload, setPayload] = useState<ProblemPayload | null>(null);
   const [loadError, setLoadError] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -310,14 +318,21 @@ export default function Home() {
     window.localStorage.setItem(VERSIONED_DRAFTS_KEY, JSON.stringify(drafts));
   }, [drafts, storageReady, learningIsCurrent]);
 
-  const problems = payload?.problems ?? EMPTY_PROBLEMS;
+  const problems = useMemo(
+    () =>
+      (payload?.problems ?? EMPTY_PROBLEMS).map((p) => ({
+        ...p,
+        ...overrides[p.id],
+      })),
+    [payload, overrides],
+  );
   const leetcodeCount = problems.filter(
     (problem) => problem.track === 'leetcode',
   ).length;
   const multimodalCount = problems.length - leetcodeCount;
   const selected =
     problems.find((problem) => problem.id === selectedId) ?? null;
-  const referenceCode = selected ? getReference(selected) : '';
+  const defaultSelected = payload?.problems.find((p) => p.id === selected?.id);
   const editorDraft = selected ? drafts[draftKey(selected.id)] : undefined;
   const selectedIndex = selected
     ? problems.findIndex((problem) => problem.id === selected.id)
@@ -375,6 +390,16 @@ export default function Home() {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
   }, []);
+
+  useEffect(() => {
+    if (editorDraft?.kind !== 'reference') return;
+    cancelRun();
+    setConsoleState({
+      status: 'idle',
+      title: '参考答案已载入',
+      output: '当前使用已保存的参考答案，请重新运行。',
+    });
+  }, [selected?.referenceCode, editorDraft?.kind, cancelRun]);
 
   const selectProblem = useCallback(
     (problem: Problem) => {
@@ -882,9 +907,12 @@ export default function Home() {
                 <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
                   核心思路
                 </div>
-                <p className="text-[15px] leading-7 text-foreground/85">
-                  {selected.approach}
-                </p>
+                <SolutionContent
+                  key={`${selected.id}:approach`}
+                  problemId={selected.id}
+                  field="approach"
+                  defaultValue={defaultSelected?.approach ?? selected.approach}
+                />
               </section>
 
               <section className="grid gap-3 sm:grid-cols-2">
@@ -1003,7 +1031,9 @@ export default function Home() {
                   <div className="mt-3 overflow-hidden rounded-xl border bg-muted/50">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
                       <span className="text-xs text-muted-foreground">
-                        {payload?.answerEdition ?? '精简注释版'}
+                        {overrides[selected.id]?.referenceCode !== undefined
+                          ? '我的参考答案'
+                          : (payload?.answerEdition ?? '精简注释版')}
                       </span>
                       <Button
                         size="sm"
@@ -1013,18 +1043,17 @@ export default function Home() {
                         载入编辑器
                       </Button>
                     </div>
-                    <Suspense
-                      fallback={
-                        <p className="p-4 text-sm text-muted-foreground">
-                          正在加载题解…
-                        </p>
-                      }
-                    >
-                      <PythonCodeBlock
-                        code={referenceCode}
-                        className="max-h-[520px] p-4"
+                    <div className="p-4">
+                      <SolutionContent
+                        key={`${selected.id}:answer`}
+                        problemId={selected.id}
+                        field="referenceCode"
+                        defaultValue={
+                          defaultSelected?.referenceCode ??
+                          selected.referenceCode
+                        }
                       />
-                    </Suspense>
+                    </div>
                   </div>
                 )}
               </section>

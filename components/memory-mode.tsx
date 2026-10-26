@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   CheckCircle2,
@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AppearanceControls } from '@/components/appearance-settings';
 import { ResetLearningDialog } from '@/components/reset-learning-dialog';
+import { SolutionContent } from '@/components/solution-content';
+import { useSolutions } from '@/components/solution-overrides';
 import { learningGeneration, isCurrentLearning } from '@/lib/learning-storage';
 import {
   MEMORY_KEY,
@@ -136,7 +138,11 @@ export function MemoryMode({
   onExit: () => void;
   onReset: () => string | null;
 }) {
-  const problems = payload.problems;
+  const { overrides } = useSolutions();
+  const problems = useMemo(
+    () => payload.problems.map((p) => ({ ...p, ...overrides[p.id] })),
+    [payload.problems, overrides],
+  );
   const [studyTrack, setStudyTrack] = useState<
     'all' | 'leetcode' | 'multimodal'
   >('all');
@@ -167,6 +173,9 @@ export function MemoryMode({
   const generationRef = useRef<string | null>(null);
   const attempt = store.session?.attempt;
   const problem = problems.find((p) => p.id === attempt?.problemId);
+  const defaultProblem = payload.problems.find(
+    (p) => p.id === attempt?.problemId,
+  );
   const due = dueIds(store, studyProblems, now);
   const fresh = studyProblems.filter((p) => !store.cards[p.id]);
   const today = store.reviews.filter(
@@ -1072,7 +1081,14 @@ export function MemoryMode({
                 </Button>
                 {showApproach && (
                   <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm leading-7">
-                    {problem.approach}
+                    <SolutionContent
+                      key={`${attempt.id}:approach`}
+                      problemId={problem.id}
+                      field="approach"
+                      defaultValue={
+                        defaultProblem?.approach ?? problem.approach
+                      }
+                    />
                     <p className="mt-3 text-xs text-muted-foreground">
                       {problem.complexity}
                     </p>
@@ -1095,7 +1111,9 @@ export function MemoryMode({
                   <div className="overflow-hidden rounded-lg border bg-card">
                     <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
                       <span className="text-xs text-muted-foreground">
-                        精简注释版 · main
+                        {overrides[problem.id]?.referenceCode !== undefined
+                          ? '我的参考答案'
+                          : '精简注释版 · main'}
                       </span>
                       <Button
                         size="sm"
@@ -1107,18 +1125,16 @@ export function MemoryMode({
                         载入编辑器
                       </Button>
                     </div>
-                    <Suspense
-                      fallback={
-                        <div className="p-4 text-sm text-muted-foreground">
-                          正在加载题解…
-                        </div>
-                      }
-                    >
-                      <PythonCodeBlock
-                        code={problem.referenceCode}
-                        className="max-h-[32rem] overflow-auto p-4"
+                    <div className="p-4">
+                      <SolutionContent
+                        key={`${attempt.id}:answer`}
+                        problemId={problem.id}
+                        field="referenceCode"
+                        defaultValue={
+                          defaultProblem?.referenceCode ?? problem.referenceCode
+                        }
                       />
-                    </Suspense>
+                    </div>
                   </div>
                 )}
                 <p className="text-xs leading-6 text-muted-foreground">
