@@ -6,12 +6,16 @@ import type { MemoryProblem } from '@/lib/memory';
 
 export function AddSessionQuestions({
   problems,
+  eligibleIds,
+  queuedIds,
   skippedIds,
   resumeRound,
   disabled,
   onAdd,
 }: {
   problems: MemoryProblem[];
+  eligibleIds: string[];
+  queuedIds: string[];
   skippedIds: string[];
   resumeRound?: boolean;
   disabled?: boolean;
@@ -30,7 +34,8 @@ export function AddSessionQuestions({
     if (!dialogRef.current?.open) dialogRef.current?.showModal();
     searchRef.current?.focus();
   }, [open]);
-  const eligible = new Set(problems.map((p) => p.id));
+  const eligible = new Set(eligibleIds);
+  const queued = new Set(queuedIds);
   const skipped = new Set(skippedIds);
   const selected = picked.filter((id) => eligible.has(id));
   const needle = query.trim().toLowerCase();
@@ -87,7 +92,7 @@ export function AddSessionQuestions({
           id={descriptionId}
           className="my-4 text-sm leading-6 text-muted-foreground"
         >
-          可选择本轮题库中的新题和已跳过的题，已在队列中的题不会重复加入。按勾选顺序追加到队尾，总题数增加。重新加入会撤销该题的跳过标记，从空白模板开始；原评分、提示记录和暂存草稿保留。
+          列出本轮范围内的全部题目。绿色表示已在本轮或已学过，不能勾选；新题和标为“已跳过”的题仍可添加。按勾选顺序追加到队尾。重新加入已跳过的题会撤销跳过标记，从空白模板开始，原评分和草稿保留。
         </p>
         {resumeRound && (
           <p className="mb-4 rounded-lg bg-muted p-3 text-sm">
@@ -100,7 +105,7 @@ export function AddSessionQuestions({
               <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
               <Input
                 ref={searchRef}
-                aria-label="搜索可添加的题目"
+                aria-label="搜索本轮题库中的题目"
                 placeholder="搜索题号或题名"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -108,39 +113,54 @@ export function AddSessionQuestions({
               />
             </div>
             <div className="max-h-[45dvh] overflow-y-auto rounded-xl border">
-              {visible.map((p) => (
-                <label
-                  key={p.id}
-                  className="flex cursor-pointer items-center gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(p.id)}
-                    onChange={(e) =>
-                      setPicked((current) =>
-                        e.target.checked
-                          ? [...current, p.id]
-                          : current.filter((id) => id !== p.id),
-                      )
-                    }
-                    className="size-4 shrink-0 accent-primary"
-                  />
-                  <span className="w-16 shrink-0 text-xs text-muted-foreground">
-                    {label(p)}
-                  </span>
-                  <span className="min-w-0 flex-1 text-sm">{p.title}</span>
-                  {skipped.has(p.id) && (
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-                      已跳过
+              {visible.map((p) => {
+                const locked = !eligible.has(p.id);
+                const status = locked
+                  ? queued.has(p.id)
+                    ? '已在本轮'
+                    : '已学过'
+                  : skipped.has(p.id)
+                    ? '已跳过'
+                    : '';
+                return (
+                  <label
+                    key={p.id}
+                    className={`flex items-center gap-3 border-b px-4 py-3 last:border-0 ${locked ? 'cursor-not-allowed bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300' : 'cursor-pointer hover:bg-muted'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      disabled={locked}
+                      checked={selected.includes(p.id)}
+                      onChange={(e) =>
+                        setPicked((current) =>
+                          e.target.checked
+                            ? [...current, p.id]
+                            : current.filter((id) => id !== p.id),
+                        )
+                      }
+                      className="size-4 shrink-0 accent-primary"
+                    />
+                    <span
+                      className={`w-16 shrink-0 text-xs ${locked ? '' : 'text-muted-foreground'}`}
+                    >
+                      {label(p)}
                     </span>
-                  )}
-                </label>
-              ))}
+                    <span className="min-w-0 flex-1 text-sm">{p.title}</span>
+                    {status && (
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${locked ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted text-muted-foreground'}`}
+                      >
+                        {status}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
               {!visible.length && (
                 <p className="p-6 text-center text-sm leading-6 text-muted-foreground">
                   {problems.length
                     ? '没有找到匹配的题目，试试其他题号或题名。'
-                    : '本轮题库没有可添加的新题或已跳过的题。已在队列中的题和其他已学习的题不会重复出现。'}
+                    : '本轮题库没有题目。'}
                 </p>
               )}
             </div>
@@ -154,7 +174,8 @@ export function AddSessionQuestions({
                 aria-live="polite"
                 className="text-sm text-muted-foreground"
               >
-                已选 {selected.length} 题 · 共 {problems.length} 题可选
+                已选 {selected.length} 题 · {eligible.size} 题可添加 / 共{' '}
+                {problems.length} 题
               </span>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={close}>

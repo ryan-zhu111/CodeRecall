@@ -28,5 +28,6 @@ for p in data['problems']:
     template=compile(data['prelude']+'\n\n'+p['inputStarterCode'],p['id'],'exec')
     assert run(template,p['sampleInput'])==''
     assert any(norm(run(template,c['input']),p['normalizer'])!=norm(c['expected'],p['normalizer']) for c in suites[p['id']]),p['id']
-assert len(suites)==100
-print(f'PASS: all 100 answers on {count} review tests; all input templates parse and cannot pass the full suite.')
+algorithm_ids={p['id'] for p in data['problems'] if p['track']=='leetcode'}
+assert set(suites)==algorithm_ids
+print(f'PASS: all {len(algorithm_ids)} answers on {count} review tests; all input templates parse and cannot pass the full suite.')

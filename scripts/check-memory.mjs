@@ -428,7 +428,7 @@ const newRound = m.startSession(
 );
 assert.equal(
   newRound.session.queue.length,
-  115,
+  data.problems.length,
   'all questions become new again',
 );
 assert.equal(newRound.session.attempt.code, data.problems[0].starterCode);

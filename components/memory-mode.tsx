@@ -21,6 +21,11 @@ import { AppearanceControls } from '@/components/appearance-settings';
 import { ResetLearningDialog } from '@/components/reset-learning-dialog';
 import { HelperCodeDialog } from '@/components/helper-code-dialog';
 import { AddSessionQuestions } from '@/components/add-session-questions';
+import {
+  scopeLabels,
+  problemsInScope,
+  type ProblemScope,
+} from '@/lib/problem-collections';
 import { SolutionContent } from '@/components/solution-content';
 import { useSolutions } from '@/components/solution-overrides';
 import { learningGeneration, isCurrentLearning } from '@/lib/learning-storage';
@@ -42,6 +47,7 @@ import {
   revealHint,
   startSession,
   skipAttempt,
+  sessionPool,
   type Grade,
   type MemoryProblem,
   type MemoryStore,
@@ -147,12 +153,8 @@ export function MemoryMode({
     () => payload.problems.map((p) => ({ ...p, ...overrides[p.id] })),
     [payload.problems, overrides],
   );
-  const [studyTrack, setStudyTrack] = useState<
-    'all' | 'leetcode' | 'multimodal'
-  >('all');
-  const studyProblems = problems.filter(
-    (p) => studyTrack === 'all' || p.track === studyTrack,
-  );
+  const [studyTrack, setStudyTrack] = useState<ProblemScope>('all');
+  const studyProblems = problemsInScope(problems, studyTrack);
   const [store, setStore] = useState<MemoryStore>(emptyMemory);
   const storeRef = useRef<MemoryStore | null>(null);
   const [ready, setReady] = useState(false);
@@ -531,7 +533,11 @@ export function MemoryMode({
             />
             {(attempt || !!store.session?.skipped?.length) && (
               <AddSessionQuestions
-                problems={availableSessionProblems(store, problems)}
+                problems={sessionPool(store, problems)}
+                eligibleIds={availableSessionProblems(store, problems).map(
+                  (p) => p.id,
+                )}
+                queuedIds={store.session?.queue ?? []}
                 skippedIds={store.session?.skipped ?? []}
                 resumeRound={!attempt}
                 disabled={!ready}
@@ -635,12 +641,7 @@ export function MemoryMode({
               {
                 label: '本轮范围待学',
                 value: fresh.length,
-                sub:
-                  studyTrack === 'all'
-                    ? '全部 115 题'
-                    : studyTrack === 'leetcode'
-                      ? 'Hot 100 算法题'
-                      : '15 道多模态题',
+                sub: `${scopeLabels[studyTrack]} · ${studyProblems.length} 题`,
               },
             ].map((x) => (
               <div key={x.label} className="text-center">
@@ -695,9 +696,7 @@ export function MemoryMode({
                       onChange={(event) => {
                         const track = event.target.value as typeof studyTrack;
                         setStudyTrack(track);
-                        const pool = problems.filter(
-                          (p) => track === 'all' || p.track === track,
-                        );
+                        const pool = problemsInScope(problems, track);
                         setReviewAmount(
                           Math.min(5, dueIds(store, pool, new Date()).length),
                         );
@@ -709,11 +708,16 @@ export function MemoryMode({
                         );
                       }}
                     >
-                      <option value="all">全部题库 · 115 题</option>
-                      <option value="leetcode">
-                        LeetCode Hot 100 · 100 题
-                      </option>
-                      <option value="multimodal">多模态手撕 · 15 题</option>
+                      {Object.entries(scopeLabels).map(([scope, label]) => (
+                        <option key={scope} value={scope}>
+                          {label} ·{' '}
+                          {
+                            problemsInScope(problems, scope as ProblemScope)
+                              .length
+                          }{' '}
+                          题
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <div className="my-6 grid grid-cols-2 gap-4">
@@ -963,7 +967,8 @@ export function MemoryMode({
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t pt-6 text-xs text-muted-foreground">
             <div className="max-w-xl leading-6">
               <p>
-                记录保存在当前浏览器，可导出后在其他浏览器导入。全部 115
+                记录保存在当前浏览器，可导出后在其他浏览器导入。全部{' '}
+                {problems.length}
                 题均支持记忆模式；算法题运行测试，多模态题检查语法与接口结构。
               </p>
               <p className="mt-1">{dayKey(now)} · 北京时间</p>

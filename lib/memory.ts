@@ -21,6 +21,8 @@ export type MemoryProblem = {
   id: string;
   lc: number | null;
   track: string;
+  hot100?: boolean;
+  codeTopRank?: number;
   title: string;
   statement: string[];
   approach: string;

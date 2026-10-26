@@ -48,6 +48,12 @@ import {
 } from '@/lib/editor-state';
 
 import { MemoryMode } from '@/components/memory-mode';
+import {
+  scopeLabels,
+  inProblemScope,
+  problemsInScope,
+  type ProblemScope,
+} from '@/lib/problem-collections';
 import { HelperCodeDialog } from '@/components/helper-code-dialog';
 import { SolutionContent } from '@/components/solution-content';
 import {
@@ -82,6 +88,8 @@ type Problem = {
   trackSequence?: number;
   lc: number | null;
   track: Track;
+  hot100?: boolean;
+  codeTopRank?: number;
   runtime: 'python' | 'pytorch';
   judgeMode: JudgeMode;
   title: string;
@@ -201,7 +209,7 @@ function Workspace() {
   const [loadError, setLoadError] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [trackFilter, setTrackFilter] = useState<'all' | Track>('all');
+  const [trackFilter, setTrackFilter] = useState<ProblemScope>('all');
   const [category, setCategory] = useState('全部分类');
   const [statusFilter, setStatusFilter] = useState('全部状态');
   const [solved, setSolved] = useState<Set<string>>(new Set());
@@ -327,10 +335,6 @@ function Workspace() {
       })),
     [payload, overrides],
   );
-  const leetcodeCount = problems.filter(
-    (problem) => problem.track === 'leetcode',
-  ).length;
-  const multimodalCount = problems.length - leetcodeCount;
   const selected =
     problems.find((problem) => problem.id === selectedId) ?? null;
   const defaultSelected = payload?.problems.find((p) => p.id === selected?.id);
@@ -345,10 +349,7 @@ function Workspace() {
       ...Array.from(
         new Set(
           problems
-            .filter(
-              (problem) =>
-                trackFilter === 'all' || problem.track === trackFilter,
-            )
+            .filter((problem) => inProblemScope(problem, trackFilter))
             .map((problem) => problem.category),
         ),
       ),
@@ -358,14 +359,12 @@ function Workspace() {
 
   const filteredProblems = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return problems.filter((problem) => {
+    return problemsInScope(problems, trackFilter).filter((problem) => {
       const matchesQuery =
         !needle ||
         problem.title.toLowerCase().includes(needle) ||
         problemLabel(problem).toLowerCase().includes(needle) ||
         problem.tags.some((tag) => tag.toLowerCase().includes(needle));
-      const matchesTrack =
-        trackFilter === 'all' || problem.track === trackFilter;
       const matchesCategory =
         category === '全部分类' || problem.category === category;
       const isSolved = isProblemSolved(solved, problem);
@@ -373,7 +372,7 @@ function Workspace() {
         statusFilter === '全部状态' ||
         (statusFilter === '已完成' && isSolved) ||
         (statusFilter === '未完成' && !isSolved);
-      return matchesQuery && matchesTrack && matchesCategory && matchesStatus;
+      return matchesQuery && matchesCategory && matchesStatus;
     });
   }, [category, problems, query, solved, statusFilter, trackFilter]);
 
@@ -690,13 +689,11 @@ function Workspace() {
             <NativeSelect
               value={trackFilter}
               onChange={(event) => {
-                const nextTrack = event.target.value as 'all' | Track;
+                const nextTrack = event.target.value as ProblemScope;
                 setTrackFilter(nextTrack);
                 setCategory('全部分类');
-                if (nextTrack !== 'all' && selected.track !== nextTrack) {
-                  const firstProblem = problems.find(
-                    (problem) => problem.track === nextTrack,
-                  );
+                if (!inProblemScope(selected, nextTrack)) {
+                  const firstProblem = problemsInScope(problems, nextTrack)[0];
                   if (firstProblem) selectProblem(firstProblem);
                 }
               }}
@@ -704,15 +701,12 @@ function Workspace() {
               size="sm"
               aria-label="按题库筛选"
             >
-              <NativeSelectOption value="all">
-                全部题库 · {problems.length}
-              </NativeSelectOption>
-              <NativeSelectOption value="leetcode">
-                LeetCode Hot 100 · {leetcodeCount}
-              </NativeSelectOption>
-              <NativeSelectOption value="multimodal">
-                多模态手撕 · {multimodalCount}
-              </NativeSelectOption>
+              {Object.entries(scopeLabels).map(([scope, label]) => (
+                <NativeSelectOption key={scope} value={scope}>
+                  {label} ·{' '}
+                  {problemsInScope(problems, scope as ProblemScope).length}
+                </NativeSelectOption>
+              ))}
             </NativeSelect>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <NativeSelect
