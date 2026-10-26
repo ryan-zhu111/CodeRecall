@@ -102,6 +102,102 @@ assert.equal(
   hintedSkip.reviews,
   'skip preserves existing hint record',
 );
+assert.equal(m.sessionProblemStatus(skipped, skipPool[0].id), 'skipped');
+assert.ok(
+  m
+    .availableSessionProblems(skipped, data.problems)
+    .some((p) => p.id === skipPool[0].id),
+  'directly skipped question is addable',
+);
+const pendingSkip = m.skipAttempt(
+  m.editAttempt(hintedSkip, ''),
+  data.problems,
+  now,
+);
+const newRound = m.startSession(pendingSkip, skipPool.slice(1), 0, 1, now);
+const restoredRound = m.parseMemory(JSON.stringify(newRound), ids);
+assert.equal(
+  m.sessionProblemStatus(restoredRound, skipPool[0].id),
+  'skipped',
+  'empty skipped draft preserves skip status across rounds and refresh',
+);
+assert.ok(
+  m
+    .availableSessionProblems(restoredRound, data.problems)
+    .some((p) => p.id === skipPool[0].id),
+  'previously skipped question remains addable even with an existing FSRS card',
+);
+const readded = m.addSessionProblems(
+  restoredRound,
+  data.problems,
+  [skipPool[0].id],
+  now,
+);
+assert.equal(readded.session.queue.at(-1), skipPool[0].id);
+assert.equal(
+  readded.session.attempt,
+  restoredRound.session.attempt,
+  'manual re-add preserves current attempt',
+);
+assert.equal(
+  readded.cards,
+  restoredRound.cards,
+  'manual re-add preserves previous FSRS cards',
+);
+assert.equal(
+  readded.reviews,
+  restoredRound.reviews,
+  'manual re-add preserves review history',
+);
+assert.equal(
+  m.sessionProblemStatus(readded, skipPool[0].id),
+  'queued',
+  'queued state wins over pending skip',
+);
+assert.equal(
+  m.addSessionProblems(readded, data.problems, [skipPool[0].id], now),
+  readded,
+  'cannot add a queued question twice',
+);
+const completedAt = new Date(now.getTime() + 86400000);
+let completedSkip = m.startSession(
+  pendingSkip,
+  [skipPool[0]],
+  1,
+  0,
+  completedAt,
+);
+completedSkip = m.editAttempt(completedSkip, 'synthetic recalled solution');
+completedSkip = m.acceptAttempt(
+  completedSkip,
+  completedSkip.session.attempt.id,
+  'synthetic recalled solution',
+  2,
+);
+completedSkip = m.finishAttempt(
+  completedSkip,
+  m.Rating.Good,
+  data.problems,
+  completedAt,
+);
+const afterCompletion = m.startSession(
+  completedSkip,
+  skipPool.slice(1),
+  0,
+  1,
+  completedAt,
+);
+assert.equal(
+  m.sessionProblemStatus(afterCompletion, skipPool[0].id),
+  'learned',
+  'completed attempts clear pending skip status',
+);
+assert.ok(
+  !m
+    .availableSessionProblems(afterCompletion, data.problems)
+    .some((p) => p.id === skipPool[0].id),
+  'completed learned question remains disabled',
+);
 let s = m.startSession(m.emptyMemory(), problems, 0, 2, now);
 assert.equal(s.session.attempt.code, problems[0].starterCode);
 assert.equal(s.session.queue.length, 2);

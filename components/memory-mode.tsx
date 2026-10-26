@@ -47,6 +47,7 @@ import {
   revealHint,
   startSession,
   skipAttempt,
+  sessionProblemStatus,
   type Grade,
   type MemoryProblem,
   type MemoryStore,
@@ -536,8 +537,12 @@ export function MemoryMode({
                 eligibleIds={availableSessionProblems(store, problems).map(
                   (p) => p.id,
                 )}
-                queuedIds={store.session?.queue ?? []}
-                skippedIds={store.session?.skipped ?? []}
+                questionStates={Object.fromEntries(
+                  problems.map((p) => [
+                    p.id,
+                    sessionProblemStatus(store, p.id),
+                  ]),
+                )}
                 resumeRound={!attempt}
                 disabled={!ready}
                 onAdd={addQuestions}

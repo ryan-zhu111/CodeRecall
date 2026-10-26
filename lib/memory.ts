@@ -198,18 +198,33 @@ export function sessionPool(store: MemoryStore, problems: MemoryProblem[]) {
   );
 }
 
+export type SessionProblemStatus = 'new' | 'skipped' | 'queued' | 'learned';
+
+export function sessionProblemStatus(
+  store: MemoryStore,
+  problemId: string,
+): SessionProblemStatus {
+  if (store.session?.queue.includes(problemId)) return 'queued';
+  // A pending skip survives a new round through its saved draft, even if empty.
+  if (
+    store.session?.skipped?.includes(problemId) ||
+    Object.hasOwn(store.skippedDrafts ?? {}, problemId)
+  )
+    return 'skipped';
+  return store.cards[problemId] ? 'learned' : 'new';
+}
+
 export function availableSessionProblems(
   store: MemoryStore,
   problems: MemoryProblem[],
 ) {
   const session = store.session;
   if (!session || (!session.attempt && !session.skipped?.length)) return [];
-  const queued = new Set(session.queue);
-  const skipped = new Set(session.skipped ?? []);
   // Manual selection uses the complete catalog, including for saved old rounds.
-  return problems.filter(
-    (p) => !queued.has(p.id) && (!store.cards[p.id] || skipped.has(p.id)),
-  );
+  return problems.filter((p) => {
+    const status = sessionProblemStatus(store, p.id);
+    return status === 'new' || status === 'skipped';
+  });
 }
 
 export function addSessionProblems(

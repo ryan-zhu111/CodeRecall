@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { ListPlus, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { MemoryProblem } from '@/lib/memory';
+import type { MemoryProblem, SessionProblemStatus } from '@/lib/memory';
 import {
   scopeLabels,
   problemsInScope,
@@ -12,16 +12,14 @@ import {
 export function AddSessionQuestions({
   problems,
   eligibleIds,
-  queuedIds,
-  skippedIds,
+  questionStates,
   resumeRound,
   disabled,
   onAdd,
 }: {
   problems: MemoryProblem[];
   eligibleIds: string[];
-  queuedIds: string[];
-  skippedIds: string[];
+  questionStates: Record<string, SessionProblemStatus>;
   resumeRound?: boolean;
   disabled?: boolean;
   onAdd: (ids: string[]) => string | null;
@@ -42,8 +40,6 @@ export function AddSessionQuestions({
     searchRef.current?.focus();
   }, [open]);
   const eligible = new Set(eligibleIds);
-  const queued = new Set(queuedIds);
-  const skipped = new Set(skippedIds);
   const selected = picked.filter((id) => eligible.has(id));
   const needle = query.trim().toLowerCase();
   const label = (p: MemoryProblem) =>
@@ -110,7 +106,7 @@ export function AddSessionQuestions({
           className="my-4 text-sm leading-6 text-muted-foreground"
         >
           从全部 {problems.length}{' '}
-          题中选题，不受本轮题库范围限制。绿色表示已在本轮或已学过，不能勾选；新题和标为“已跳过”的题仍可添加。按勾选顺序追加到队尾，切换筛选保留已选题目。当前草稿和学习记录保留；重新加入已跳过的题从空白模板开始。
+          题中选题，不受本轮题库范围限制。绿色表示已在本轮或已学过，不能勾选；新题和标为“已跳过”的题仍可添加，未完成的跳过题跨轮保留。按勾选顺序追加到队尾，切换筛选保留已选题目。当前草稿和学习记录保留；重新加入已跳过的题从空白模板开始。
         </p>
         {resumeRound && (
           <p className="mb-4 rounded-lg bg-muted p-3 text-sm">
@@ -170,17 +166,18 @@ export function AddSessionQuestions({
             <div className="max-h-[45dvh] overflow-y-auto rounded-xl border">
               {visible.map((p) => {
                 const locked = !eligible.has(p.id);
-                const status = locked
-                  ? queued.has(p.id)
-                    ? '已在本轮'
-                    : '已学过'
-                  : skipped.has(p.id)
-                    ? '已跳过'
-                    : '';
+                const state = questionStates[p.id] ?? 'new';
+                const green = state === 'queued' || state === 'learned';
+                const status = {
+                  queued: '已在本轮',
+                  learned: '已学过',
+                  skipped: '已跳过',
+                  new: locked ? '暂不可添加' : '',
+                }[state];
                 return (
                   <label
                     key={p.id}
-                    className={`flex items-center gap-3 border-b px-4 py-3 last:border-0 ${locked ? 'cursor-not-allowed bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300' : 'cursor-pointer hover:bg-muted'}`}
+                    className={`flex items-center gap-3 border-b px-4 py-3 last:border-0 ${locked ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-muted'} ${green ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300' : ''}`}
                   >
                     <input
                       type="checkbox"
@@ -196,14 +193,14 @@ export function AddSessionQuestions({
                       className="size-4 shrink-0 accent-primary"
                     />
                     <span
-                      className={`w-16 shrink-0 text-xs ${locked ? '' : 'text-muted-foreground'}`}
+                      className={`w-16 shrink-0 text-xs ${green ? '' : 'text-muted-foreground'}`}
                     >
                       {label(p)}
                     </span>
                     <span className="min-w-0 flex-1 text-sm">{p.title}</span>
                     {status && (
                       <span
-                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${locked ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted text-muted-foreground'}`}
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${green ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted text-muted-foreground'}`}
                       >
                         {status}
                       </span>
