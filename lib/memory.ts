@@ -184,42 +184,57 @@ export function sessionPool(store: MemoryStore, problems: MemoryProblem[]) {
   if (!session) return [];
   // Old saved rounds only identify their scope through queued question tracks.
   const tracks = new Set(
-    problems.filter((p) => session.queue.includes(p.id)).map((p) => p.track),
+    problems
+      .filter(
+        (p) => session.queue.includes(p.id) || session.skipped?.includes(p.id),
+      )
+      .map((p) => p.track),
   );
   return problems.filter((p) =>
     session.pool ? session.pool.includes(p.id) : tracks.has(p.track),
   );
 }
 
-export function availableSessionNewProblems(
+export function availableSessionProblems(
   store: MemoryStore,
   problems: MemoryProblem[],
 ) {
   const session = store.session;
-  if (!session?.attempt) return [];
-  const excluded = new Set([...session.queue, ...(session.skipped ?? [])]);
+  if (!session || (!session.attempt && !session.skipped?.length)) return [];
+  const queued = new Set(session.queue);
+  const skipped = new Set(session.skipped ?? []);
   return sessionPool(store, problems).filter(
-    (p) => !store.cards[p.id] && !excluded.has(p.id),
+    (p) => !queued.has(p.id) && (!store.cards[p.id] || skipped.has(p.id)),
   );
 }
 
-export function addSessionNewProblems(
+export function addSessionProblems(
   store: MemoryStore,
   problems: MemoryProblem[],
   ids: string[],
+  now: Date,
 ): MemoryStore {
-  if (!store.session?.attempt) return store;
+  const session = store.session;
+  if (!session) return store;
   const eligible = new Set(
-    availableSessionNewProblems(store, problems).map((p) => p.id),
+    availableSessionProblems(store, problems).map((p) => p.id),
   );
   const added = [...new Set(ids)].filter((id) => eligible.has(id));
   if (!added.length) return store;
   return {
     ...store,
     session: {
-      ...store.session,
-      queue: [...store.session.queue, ...added],
+      ...session,
+      queue: [...session.queue, ...added],
       pool: sessionPool(store, problems).map((p) => p.id),
+      // Explicitly adding a skipped question cancels only its skip marker.
+      skipped: (session.skipped ?? []).filter((id) => !added.includes(id)),
+      attempt:
+        session.attempt ??
+        freshAttempt(
+          problems.find((p) => p.id === added[0])!,
+          now,
+        ),
     },
   };
 }

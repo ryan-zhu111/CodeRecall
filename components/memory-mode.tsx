@@ -28,8 +28,8 @@ import {
   MEMORY_KEY,
   Rating,
   acceptAttempt,
-  addSessionNewProblems,
-  availableSessionNewProblems,
+  addSessionProblems,
+  availableSessionProblems,
   dayKey,
   dueIds,
   editAttempt,
@@ -354,15 +354,15 @@ export function MemoryMode({
     setActive(hasNext);
     setNotice(
       hasNext
-        ? '已跳过本题，草稿已暂存。本轮不再出现，不新增评分；已有提示记录保留。'
-        : '本轮已结束，当前范围没有更多可补充的题目。跳过的题目仍可在下一轮学习，草稿已暂存。',
+        ? '已跳过本题，草稿已暂存，不新增评分。可通过“添加题目”重新加入；已有提示记录保留。'
+        : '本轮已结束，草稿已暂存。可通过“添加题目”重新加入已跳过的题，或在下一轮学习。',
     );
   }
 
-  function addNewQuestions(ids: string[]) {
+  function addQuestions(ids: string[]) {
     let count = 0;
     const ok = commit((current) => {
-      const next = addSessionNewProblems(current, problems, ids);
+      const next = addSessionProblems(current, problems, ids, new Date());
       count =
         (next.session?.queue.length ?? 0) -
         (current.session?.queue.length ?? 0);
@@ -371,7 +371,7 @@ export function MemoryMode({
     if (!ok) return '未能加入本轮，请查看页面提示并重试。';
     if (!count) return '所选题目已不可添加，请关闭后重新选择。';
     setNotice(
-      `已将 ${count} 道新题追加到本轮末尾。当前默写和复习安排保持不变。`,
+      `已将 ${count} 道题追加到本轮末尾；重新加入的题已撤销跳过标记。已有评分和复习安排保留。`,
     );
     return null;
   }
@@ -529,11 +529,13 @@ export function MemoryMode({
               className="mx-1 hidden h-5 w-px bg-border sm:block"
               aria-hidden="true"
             />
-            {attempt && (
+            {(attempt || !!store.session?.skipped?.length) && (
               <AddSessionQuestions
-                problems={availableSessionNewProblems(store, problems)}
+                problems={availableSessionProblems(store, problems)}
+                skippedIds={store.session?.skipped ?? []}
+                resumeRound={!attempt}
                 disabled={!ready}
-                onAdd={addNewQuestions}
+                onAdd={addQuestions}
               />
             )}
             {active && (

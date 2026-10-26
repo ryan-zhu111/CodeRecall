@@ -6,10 +6,14 @@ import type { MemoryProblem } from '@/lib/memory';
 
 export function AddSessionQuestions({
   problems,
+  skippedIds,
+  resumeRound,
   disabled,
   onAdd,
 }: {
   problems: MemoryProblem[];
+  skippedIds: string[];
+  resumeRound?: boolean;
   disabled?: boolean;
   onAdd: (ids: string[]) => string | null;
 }) {
@@ -27,6 +31,7 @@ export function AddSessionQuestions({
     searchRef.current?.focus();
   }, [open]);
   const eligible = new Set(problems.map((p) => p.id));
+  const skipped = new Set(skippedIds);
   const selected = picked.filter((id) => eligible.has(id));
   const needle = query.trim().toLowerCase();
   const label = (p: MemoryProblem) =>
@@ -55,7 +60,7 @@ export function AddSessionQuestions({
         }}
       >
         <ListPlus className="size-4" />
-        添加新题
+        添加题目
       </Button>
       <dialog
         ref={dialogRef}
@@ -67,12 +72,12 @@ export function AddSessionQuestions({
       >
         <div className="flex items-center justify-between gap-4">
           <h2 id={titleId} className="text-lg font-semibold">
-            从题库添加新题
+            从题库添加题目
           </h2>
           <Button
             size="icon-sm"
             variant="ghost"
-            aria-label="关闭添加新题"
+            aria-label="关闭添加题目"
             onClick={close}
           >
             <X />
@@ -82,15 +87,20 @@ export function AddSessionQuestions({
           id={descriptionId}
           className="my-4 text-sm leading-6 text-muted-foreground"
         >
-          仅显示本轮题库中尚未学习的新题，排除已在本轮和本轮已跳过的题。按勾选顺序追加到本轮末尾，总题数增加；当前默写和已有复习安排保持不变。
+          可选择本轮题库中的新题和已跳过的题，已在队列中的题不会重复加入。按勾选顺序追加到队尾，总题数增加。重新加入会撤销该题的跳过标记，从空白模板开始；原评分、提示记录和暂存草稿保留。
         </p>
+        {resumeRound && (
+          <p className="mb-4 rounded-lg bg-muted p-3 text-sm">
+            本轮已结束，加入题目后可继续这一轮。
+          </p>
+        )}
         {open && (
           <>
             <div className="relative mb-4">
               <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
               <Input
                 ref={searchRef}
-                aria-label="搜索可添加的新题"
+                aria-label="搜索可添加的题目"
                 placeholder="搜索题号或题名"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -118,14 +128,19 @@ export function AddSessionQuestions({
                   <span className="w-16 shrink-0 text-xs text-muted-foreground">
                     {label(p)}
                   </span>
-                  <span className="min-w-0 text-sm">{p.title}</span>
+                  <span className="min-w-0 flex-1 text-sm">{p.title}</span>
+                  {skipped.has(p.id) && (
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                      已跳过
+                    </span>
+                  )}
                 </label>
               ))}
               {!visible.length && (
                 <p className="p-6 text-center text-sm leading-6 text-muted-foreground">
                   {problems.length
                     ? '没有找到匹配的题目，试试其他题号或题名。'
-                    : '本轮题库已没有可添加的新题。已学习、已加入和本轮已跳过的题不会重复出现。'}
+                    : '本轮题库没有可添加的新题或已跳过的题。已在队列中的题和其他已学习的题不会重复出现。'}
                 </p>
               )}
             </div>
