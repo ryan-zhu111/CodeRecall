@@ -114,8 +114,14 @@ const pendingSkip = m.skipAttempt(
   data.problems,
   now,
 );
-const newRound = m.startSession(pendingSkip, skipPool.slice(1), 0, 1, now);
-const restoredRound = m.parseMemory(JSON.stringify(newRound), ids);
+const skipFollowupRound = m.startSession(
+  pendingSkip,
+  skipPool.slice(1),
+  0,
+  1,
+  now,
+);
+const restoredRound = m.parseMemory(JSON.stringify(skipFollowupRound), ids);
 assert.equal(
   m.sessionProblemStatus(restoredRound, skipPool[0].id),
   'skipped',
