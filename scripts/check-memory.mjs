@@ -204,6 +204,162 @@ assert.ok(
     .some((p) => p.id === skipPool[0].id),
   'completed learned question remains disabled',
 );
+// Round navigation: independent drafts, out-of-order completion and safe retries.
+{
+  const bank = problems.slice(0, 4);
+  let round = m.startSession(m.emptyMemory(), bank, 0, 3, now);
+  round = m.editAttempt(round, 'first draft');
+  const firstAttempt = round.session.attempt;
+  round = m.switchSessionProblem(round, bank, bank[1].id, now);
+  round = m.editAttempt(round, 'second draft');
+  round = m.revealHint(round, 'approach', now);
+  const hintedReviews = round.reviews;
+  round = m.switchSessionProblem(round, bank, bank[2].id, now);
+  assert.equal(
+    round.session.index,
+    0,
+    'jumping ahead does not count completion',
+  );
+  assert.equal(round.reviews, hintedReviews, 'switching does not grade');
+  assert.equal(
+    m.acceptAttempt(round, firstAttempt.id, firstAttempt.code, 2),
+    round,
+    'old question result is ignored',
+  );
+  round = m.editAttempt(round, 'third solution');
+  round = m.acceptAttempt(round, round.session.attempt.id, 'third solution', 2);
+  round = m.saveAttemptResult(
+    round,
+    round.session.attempt.id,
+    'third solution',
+    { status: 'accepted', text: 'passed synthetic checks' },
+  );
+  round = m.finishAttempt(round, m.Rating.Good, bank, now);
+  assert.deepEqual(m.completedSessionIds(round.session), [bank[2].id]);
+  assert.equal(round.session.index, 1);
+  assert.equal(
+    round.session.attempt.id,
+    firstAttempt.id,
+    'wraps to the existing earlier attempt',
+  );
+  assert.equal(round.session.attempt.code, 'first draft');
+  round = m.parseMemory(JSON.stringify(round), ids);
+  round = m.switchSessionProblem(round, bank, bank[2].id, now);
+  assert.equal(
+    round.session.attempt.result.status,
+    'accepted',
+    'refresh keeps saved judge result',
+  );
+  const oldCards = round.cards,
+    oldReviews = round.reviews;
+  round = m.editAttempt(round, 'wrong retry');
+  round = m.saveAttemptResult(round, round.session.attempt.id, 'wrong retry', {
+    status: 'wrong',
+    text: 'synthetic failure',
+  });
+  round = m.revealHint(round, 'answer', now);
+  round = m.finishAttempt(round, m.Rating.Again, bank, now);
+  assert.equal(
+    round.cards,
+    oldCards,
+    'completed-question retry does not change FSRS',
+  );
+  assert.equal(
+    round.reviews,
+    oldReviews,
+    'completed-question hints and retries do not grade again',
+  );
+  assert.equal(
+    round.session.index,
+    1,
+    'failed retry does not undo or duplicate completion',
+  );
+  round = m.switchSessionProblem(round, bank, bank[2].id, now);
+  assert.equal(round.session.attempt.code, 'wrong retry');
+  assert.equal(round.session.attempt.result.status, 'wrong');
+  round = m.editAttempt(round, 'correct retry');
+  round = m.acceptAttempt(round, round.session.attempt.id, 'correct retry', 2);
+  round = m.finishAttempt(round, m.Rating.Easy, bank, now);
+  assert.equal(
+    round.reviews,
+    oldReviews,
+    'successful retry also does not grade again',
+  );
+  round = m.acceptAttempt(
+    round,
+    round.session.attempt.id,
+    round.session.attempt.code,
+    2,
+  );
+  round = m.finishAttempt(round, m.Rating.Good, bank, now);
+  assert.equal(round.session.attempt.code, 'second draft');
+  assert.deepEqual(round.session.attempt.hints, ['approach']);
+  const beforeHintFinish = round.reviews.length;
+  round = m.finishAttempt(round, m.Rating.Again, bank, now);
+  assert.equal(round.reviews.length, beforeHintFinish);
+  assert.equal(round.session.index, 3);
+  assert.equal(round.session.attempt, null);
+  round = m.parseMemory(JSON.stringify(round), ids);
+  const appended = m.addSessionProblems(round, bank, [bank[3].id], now);
+  assert.equal(appended.session.attempt.problemId, bank[3].id);
+  assert.equal(m.parseMemory(JSON.stringify(appended), ids).session.index, 3);
+  const reopened = m.switchSessionProblem(round, bank, bank[0].id, now);
+  assert.equal(
+    reopened.session.attempt.code,
+    'first draft',
+    'completed round remains browsable',
+  );
+  assert.equal(
+    m.startSession(reopened, bank, 0, 1, now).session.queue[0],
+    bank[3].id,
+    'can start a new round after browsing completed work',
+  );
+
+  let skippedRound = m.startSession(m.emptyMemory(), bank, 0, 3, now);
+  skippedRound = m.editAttempt(skippedRound, 'keep earlier draft');
+  skippedRound = m.switchSessionProblem(skippedRound, bank, bank[1].id, now);
+  skippedRound = m.skipAttempt(skippedRound, bank, now);
+  assert.deepEqual(skippedRound.session.queue, [bank[0].id, bank[2].id]);
+  assert.equal(skippedRound.session.attempt.problemId, bank[2].id);
+  skippedRound = m.skipAttempt(skippedRound, bank, now);
+  assert.equal(
+    skippedRound.session.attempt.code,
+    'keep earlier draft',
+    'skip wraps to earlier unfinished drafts',
+  );
+  assert.equal(
+    m.parseMemory(JSON.stringify(skippedRound), ids).session.index,
+    0,
+  );
+
+  let legacy = m.startSession(m.emptyMemory(), bank, 0, 2, now);
+  legacy = m.finishAttempt(legacy, m.Rating.Again, bank, now);
+  delete legacy.session.attempts;
+  delete legacy.session.completed;
+  const legacyDraft = legacy.session.attempt;
+  legacy = m.parseMemory(JSON.stringify(legacy), ids);
+  const legacyReviews = legacy.reviews;
+  legacy = m.switchSessionProblem(legacy, bank, bank[0].id, now);
+  legacy = m.revealHint(legacy, 'answer', now);
+  legacy = m.parseMemory(JSON.stringify(legacy), ids);
+  legacy = m.finishAttempt(legacy, m.Rating.Again, bank, now);
+  assert.equal(
+    legacy.session.attempt.id,
+    legacyDraft.id,
+    'legacy active attempt survives upgrade',
+  );
+  assert.equal(
+    legacy.reviews.length,
+    legacyReviews.length,
+    'legacy completed question cannot be graded again',
+  );
+  const corrupt = JSON.parse(JSON.stringify(legacy));
+  corrupt.session.completed.push(bank[0].id);
+  assert.throws(
+    () => m.parseMemory(JSON.stringify(corrupt), ids),
+    'duplicate completion is rejected',
+  );
+}
 let s = m.startSession(m.emptyMemory(), problems, 0, 2, now);
 assert.equal(s.session.attempt.code, problems[0].starterCode);
 assert.equal(s.session.queue.length, 2);

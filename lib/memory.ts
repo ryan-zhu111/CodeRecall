@@ -66,6 +66,7 @@ export type Attempt = {
   passedCode?: string;
   tests: number;
   validation?: 'tests' | 'structure';
+  result?: { status: 'accepted' | 'wrong' | 'error'; text: string };
 };
 export type Session = {
   queue: string[];
@@ -74,6 +75,8 @@ export type Session = {
   index: number;
   startedAt: string;
   attempt: Attempt | null;
+  attempts?: Record<string, Attempt>;
+  completed?: string[];
 };
 export type MemoryStore = {
   version: 1;
@@ -129,6 +132,74 @@ export function freshAttempt(problem: MemoryProblem, now: Date): Attempt {
     tests: 0,
   };
 }
+export function completedSessionIds(session: Session | null) {
+  return session
+    ? (session.completed ?? session.queue.slice(0, session.index))
+    : [];
+}
+export function sessionAttempts(session: Session) {
+  return {
+    ...session.attempts,
+    ...(session.attempt
+      ? { [session.attempt.problemId]: session.attempt }
+      : {}),
+  };
+}
+function saveAttempt(store: MemoryStore, attempt: Attempt): MemoryStore {
+  const session = store.session!;
+  return {
+    ...store,
+    session: {
+      ...session,
+      completed: completedSessionIds(session),
+      attempts: { ...sessionAttempts(session), [attempt.problemId]: attempt },
+      attempt,
+    },
+  };
+}
+export function switchSessionProblem(
+  store: MemoryStore,
+  problems: MemoryProblem[],
+  problemId: string,
+  now: Date,
+): MemoryStore {
+  const session = store.session;
+  if (!session || !session.queue.includes(problemId)) return store;
+  const problem = problems.find((p) => p.id === problemId);
+  if (!problem || session.attempt?.problemId === problemId) return store;
+  const saved = sessionAttempts(session);
+  return saveAttempt(store, saved[problemId] ?? freshAttempt(problem, now));
+}
+function advanceSession(
+  store: MemoryStore,
+  problems: MemoryProblem[],
+  afterId: string,
+  now: Date,
+): MemoryStore {
+  const session = store.session!;
+  const completed = completedSessionIds(session);
+  const attempts = sessionAttempts(session);
+  const pos = session.queue.indexOf(afterId);
+  const ordered = [
+    ...session.queue.slice(pos + 1),
+    ...session.queue.slice(0, pos + 1),
+  ];
+  const nextId = ordered.find((id) => !completed.includes(id));
+  const problem = problems.find((p) => p.id === nextId);
+  const next = {
+    ...store,
+    session: {
+      ...session,
+      completed,
+      attempts,
+      index: completed.length,
+      attempt: null,
+    },
+  };
+  return problem
+    ? saveAttempt(next, attempts[problem.id] ?? freshAttempt(problem, now))
+    : next;
+}
 export function startSession(
   store: MemoryStore,
   problems: MemoryProblem[],
@@ -136,7 +207,12 @@ export function startSession(
   fresh: number,
   now: Date,
 ): MemoryStore {
-  if (store.session?.attempt) return store;
+  if (
+    store.session?.queue.some(
+      (id) => !completedSessionIds(store.session).includes(id),
+    )
+  )
+    return store;
   const cap = (value: number) =>
     Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
   const queue = [
@@ -157,6 +233,8 @@ export function startSession(
       index: 0,
       startedAt: stamp(now),
       attempt: freshAttempt(first, now),
+      attempts: {},
+      completed: [],
     },
   };
 }
@@ -166,20 +244,15 @@ export function editAttempt(
   kind: Attempt['kind'] = 'draft',
 ): MemoryStore {
   if (!store.session?.attempt) return store;
-  return {
-    ...store,
-    session: {
-      ...store.session,
-      attempt: {
-        ...store.session.attempt,
-        code,
-        kind,
-        passedCode: undefined,
-        tests: 0,
-        validation: undefined,
-      },
-    },
-  };
+  return saveAttempt(store, {
+    ...store.session.attempt,
+    code,
+    kind,
+    passedCode: undefined,
+    tests: 0,
+    validation: undefined,
+    result: undefined,
+  });
 }
 
 export function sessionPool(store: MemoryStore, problems: MemoryProblem[]) {
@@ -219,7 +292,7 @@ export function availableSessionProblems(
   problems: MemoryProblem[],
 ) {
   const session = store.session;
-  if (!session || (!session.attempt && !session.skipped?.length)) return [];
+  if (!session) return [];
   // Manual selection uses the complete catalog, including for saved old rounds.
   return problems.filter((p) => {
     const status = sessionProblemStatus(store, p.id);
@@ -244,6 +317,8 @@ export function addSessionProblems(
     ...store,
     session: {
       ...session,
+      completed: completedSessionIds(session),
+      attempts: sessionAttempts(session),
       queue: [...session.queue, ...added],
       // Keep the saved round scope valid when manually adding outside questions.
       pool: [
@@ -271,12 +346,18 @@ export function skipAttempt(
 ): MemoryStore {
   const session = store.session;
   const attempt = session?.attempt;
-  if (!session || !attempt) return store;
+  if (
+    !session ||
+    !attempt ||
+    completedSessionIds(session).includes(attempt.problemId)
+  )
+    return store;
   const skipped = [...(session.skipped ?? []), attempt.problemId];
   const queue = session.queue.filter((id) => id !== attempt.problemId);
   const pool = sessionPool(store, problems);
-  const next = problems.find((p) => p.id === queue[session.index]);
-  return {
+  const attempts = sessionAttempts(session);
+  delete attempts[attempt.problemId];
+  const next: MemoryStore = {
     ...store,
     skippedDrafts: {
       ...store.skippedDrafts,
@@ -284,12 +365,18 @@ export function skipAttempt(
     },
     session: {
       ...session,
+      completed: completedSessionIds(session),
+      attempts,
       queue,
       pool: pool.map((p) => p.id),
       skipped,
-      attempt: next ? freshAttempt(next, now) : null,
+      attempt: null,
     },
   };
+  // Continue after the removed position, wrapping to earlier unfinished work.
+  const precedingId =
+    session.queue[session.queue.indexOf(attempt.problemId) - 1] ?? '';
+  return advanceSession(next, problems, precedingId, now);
 }
 export function acceptAttempt(
   store: MemoryStore,
@@ -307,13 +394,23 @@ export function acceptAttempt(
     (validation === 'structure' && !attempt.problemId.startsWith('mm-'))
   )
     return store;
-  return {
-    ...store,
-    session: {
-      ...store.session!,
-      attempt: { ...attempt, passedCode: code, tests, validation },
-    },
-  };
+  return saveAttempt(store, {
+    ...attempt,
+    passedCode: code,
+    tests,
+    validation,
+  });
+}
+export function saveAttemptResult(
+  store: MemoryStore,
+  attemptId: string,
+  code: string,
+  result: NonNullable<Attempt['result']>,
+): MemoryStore {
+  const attempt = store.session?.attempt;
+  if (!attempt || attempt.id !== attemptId || attempt.code !== code)
+    return store;
+  return saveAttempt(store, { ...attempt, result });
 }
 export function previewGrades(
   store: MemoryStore,
@@ -333,7 +430,12 @@ export function isAttemptPassed(attempt?: Attempt | null) {
 }
 function record(store: MemoryStore, grade: Grade, now: Date): MemoryStore {
   const a = store.session?.attempt;
-  if (!a || a.recorded) return store;
+  if (
+    !a ||
+    a.recorded ||
+    completedSessionIds(store.session).includes(a.problemId)
+  )
+    return store;
   if (grade !== Rating.Again && (a.hints.length || !isAttemptPassed(a)))
     return store;
   const { card, log } = scheduler.next(
@@ -341,35 +443,37 @@ function record(store: MemoryStore, grade: Grade, now: Date): MemoryStore {
     now,
     grade,
   );
-  return {
-    ...store,
-    cards: {
-      ...store.cards,
-      [a.problemId]: {
-        ...card,
-        due: stamp(card.due),
-        last_review: card.last_review ? stamp(card.last_review) : undefined,
+  return saveAttempt(
+    {
+      ...store,
+      cards: {
+        ...store.cards,
+        [a.problemId]: {
+          ...card,
+          due: stamp(card.due),
+          last_review: card.last_review ? stamp(card.last_review) : undefined,
+        },
       },
+      reviews: [
+        ...store.reviews,
+        {
+          id: a.id,
+          problemId: a.problemId,
+          at: stamp(now),
+          grade,
+          hinted: a.hints.length > 0,
+          seconds: Math.max(
+            0,
+            Math.round((now.getTime() - Date.parse(a.startedAt)) / 1000),
+          ),
+          tests: a.tests,
+          validation: a.validation,
+          log: { ...log, due: stamp(log.due), review: stamp(log.review) },
+        },
+      ],
     },
-    reviews: [
-      ...store.reviews,
-      {
-        id: a.id,
-        problemId: a.problemId,
-        at: stamp(now),
-        grade,
-        hinted: a.hints.length > 0,
-        seconds: Math.max(
-          0,
-          Math.round((now.getTime() - Date.parse(a.startedAt)) / 1000),
-        ),
-        tests: a.tests,
-        validation: a.validation,
-        log: { ...log, due: stamp(log.due), review: stamp(log.review) },
-      },
-    ],
-    session: { ...store.session!, attempt: { ...a, recorded: true } },
-  };
+    { ...a, recorded: true },
+  );
 }
 export function revealHint(
   store: MemoryStore,
@@ -378,13 +482,7 @@ export function revealHint(
 ): MemoryStore {
   const a = store.session?.attempt;
   if (!a || a.hints.includes(kind)) return store;
-  const hinted = {
-    ...store,
-    session: {
-      ...store.session!,
-      attempt: { ...a, hints: [...a.hints, kind] },
-    },
-  };
+  const hinted = saveAttempt(store, { ...a, hints: [...a.hints, kind] });
   return record(hinted, Rating.Again, now);
 }
 export function finishAttempt(
@@ -393,24 +491,35 @@ export function finishAttempt(
   problems: MemoryProblem[],
   now: Date,
 ): MemoryStore {
+  const current = store.session?.attempt;
+  if (!current) return store;
+  if (completedSessionIds(store.session).includes(current.problemId))
+    return advanceSession(store, problems, current.problemId, now);
   const next = record(store, grade, now);
   const session = next.session;
   if (!session?.attempt?.recorded) return store;
-  const index = session.index + 1;
-  const problem = problems.find((p) => p.id === session.queue[index]);
+  const completed = [
+    ...new Set([...completedSessionIds(session), session.attempt.problemId]),
+  ];
   const skippedDrafts = next.skippedDrafts
     ? { ...next.skippedDrafts }
     : undefined;
   if (skippedDrafts) delete skippedDrafts[session.attempt.problemId];
-  return {
-    ...next,
-    ...(skippedDrafts ? { skippedDrafts } : {}),
-    session: {
-      ...session,
-      index,
-      attempt: problem ? freshAttempt(problem, now) : null,
+  return advanceSession(
+    {
+      ...next,
+      ...(skippedDrafts ? { skippedDrafts } : {}),
+      session: {
+        ...session,
+        completed,
+        index: completed.length,
+        attempts: sessionAttempts(session),
+      },
     },
-  };
+    problems,
+    session.attempt.problemId,
+    now,
+  );
 }
 export function intervalLabel(due: Date | string, now: Date) {
   const minutes = Math.max(
@@ -521,12 +630,27 @@ export function parseMemory(raw: string, validIds: Set<string>): MemoryStore {
         ))
     )
       throw new Error('跳过题目与学习队列冲突');
-    const a = s.attempt;
-    if (s.index < s.queue.length) {
+    const modern = s.completed !== undefined || s.attempts !== undefined;
+    if (
+      modern &&
+      (!Array.isArray(s.completed) ||
+        new Set(s.completed).size !== s.completed.length ||
+        !s.completed.every(
+          (id: string) => s.queue.includes(id) && data.cards[id],
+        ) ||
+        s.index !== s.completed.length ||
+        !s.attempts ||
+        typeof s.attempts !== 'object' ||
+        Array.isArray(s.attempts))
+    )
+      throw new Error('本轮完成记录或草稿集合不正确');
+    const completed = modern ? s.completed : s.queue.slice(0, s.index);
+    const checkAttempt = (a: Attempt, problemId: string) => {
       if (
         !a ||
         typeof a.id !== 'string' ||
-        a.problemId !== s.queue[s.index] ||
+        a.problemId !== problemId ||
+        !s.queue.includes(problemId) ||
         typeof a.code !== 'string' ||
         !validDate(a.startedAt) ||
         !['starter', 'input', 'draft', 'reference'].includes(a.kind) ||
@@ -536,11 +660,40 @@ export function parseMemory(raw: string, validIds: Set<string>): MemoryStore {
         !finite(a.tests) ||
         ![undefined, 'tests', 'structure'].includes(a.validation) ||
         (a.passedCode !== undefined && typeof a.passedCode !== 'string') ||
-        (a.recorded && !ids.has(a.id)) ||
-        (a.hints.length && !a.recorded)
+        (a.recorded &&
+          !data.reviews.some(
+            (r: Review) => r.id === a.id && r.problemId === problemId,
+          )) ||
+        (a.hints.length && !a.recorded && !completed.includes(problemId)) ||
+        (a.result !== undefined &&
+          (!a.result ||
+            !['accepted', 'wrong', 'error'].includes(a.result.status) ||
+            typeof a.result.text !== 'string'))
       )
         throw new Error('默写草稿数据不完整');
-    } else if (a !== null) throw new Error('学习队列状态不正确');
+    };
+    const a = s.attempt;
+    if (modern) {
+      const attemptIds = new Set();
+      for (const [id, attempt] of Object.entries(s.attempts)) {
+        checkAttempt(attempt as Attempt, id);
+        if (attemptIds.has((attempt as Attempt).id))
+          throw new Error('本轮草稿标识重复');
+        attemptIds.add((attempt as Attempt).id);
+      }
+      if (a !== null) {
+        checkAttempt(a, a?.problemId);
+        if (
+          s.attempts[a.problemId] &&
+          JSON.stringify(s.attempts[a.problemId]) !== JSON.stringify(a)
+        )
+          throw new Error('当前草稿与本轮保存状态冲突');
+        if (!s.attempts[a.problemId] && attemptIds.has(a.id))
+          throw new Error('本轮草稿标识重复');
+      } else if (s.index !== s.queue.length)
+        throw new Error('本轮仍有未完成题目');
+    } else if (s.index < s.queue.length) checkAttempt(a, s.queue[s.index]);
+    else if (a !== null) throw new Error('学习队列状态不正确');
   }
   return data as MemoryStore;
 }

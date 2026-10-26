@@ -21,6 +21,7 @@ import { AppearanceControls } from '@/components/appearance-settings';
 import { ResetLearningDialog } from '@/components/reset-learning-dialog';
 import { HelperCodeDialog } from '@/components/helper-code-dialog';
 import { AddSessionQuestions } from '@/components/add-session-questions';
+import { SessionQuestionList } from '@/components/session-question-list';
 import {
   scopeLabels,
   problemsInScope,
@@ -48,6 +49,11 @@ import {
   startSession,
   skipAttempt,
   sessionProblemStatus,
+  completedSessionIds,
+  sessionAttempts,
+  switchSessionProblem,
+  saveAttemptResult,
+  type Attempt,
   type Grade,
   type MemoryProblem,
   type MemoryStore,
@@ -178,6 +184,10 @@ export function MemoryMode({
   const mountedRef = useRef(true);
   const generationRef = useRef<string | null>(null);
   const attempt = store.session?.attempt;
+  const completed = completedSessionIds(store.session);
+  const currentCompleted = !!attempt && completed.includes(attempt.problemId);
+  const unfinished =
+    store.session?.queue.filter((id) => !completed.includes(id)) ?? [];
   const problem = problems.find((p) => p.id === attempt?.problemId);
   const defaultProblem = payload.problems.find(
     (p) => p.id === attempt?.problemId,
@@ -316,7 +326,7 @@ export function MemoryMode({
     setShowAnswer(false);
     setShowApproach(false);
     setCustomInput(problem?.sampleInput ?? '');
-    setResult(idle);
+    setResult(attempt?.result ?? idle);
   }, [attempt?.id]);
 
   useEffect(() => {
@@ -346,6 +356,24 @@ export function MemoryMode({
         '本轮完成。下一次从空白重新默写；到期题会继续出现在待复习列表中。',
       );
     }
+  }
+  function selectQuestion(id: string) {
+    stopRun();
+    const session = storeRef.current?.session;
+    const missingLegacyCode =
+      !!session &&
+      completedSessionIds(session).includes(id) &&
+      !sessionAttempts(session)[id];
+    if (!commit((s) => switchSessionProblem(s, problems, id, new Date())))
+      return false;
+    setResult(storeRef.current?.session?.attempt?.result ?? idle);
+    setActive(true);
+    setNotice(
+      missingLegacyCode
+        ? '这道题来自旧轮次，旧版本未保存它的提交代码。已打开空白模板供重新练习；原完成记录和评分保留。'
+        : '',
+    );
+    return true;
   }
   function skip() {
     stopRun();
@@ -385,6 +413,25 @@ export function MemoryMode({
     const id = ++runRef.current,
       attemptId = attempt.id,
       code = attempt.code;
+    function publishResult(
+      next: NonNullable<Attempt['result']>,
+      passedTests?: number,
+      validation: 'tests' | 'structure' = 'tests',
+    ) {
+      if (allTests || structureMode) {
+        if (
+          !commit((s) => {
+            const accepted =
+              passedTests === undefined
+                ? s
+                : acceptAttempt(s, attemptId, code, passedTests, validation);
+            return saveAttemptResult(accepted, attemptId, code, next);
+          })
+        )
+          return;
+      }
+      setResult(next);
+    }
     const worker =
       workerRef.current ??
       new Worker(`${import.meta.env.BASE_URL}python-worker.js`);
@@ -405,23 +452,27 @@ export function MemoryMode({
       runningRef.current = false;
       const data = event.data;
       if (data.error || data.stderr) {
-        setResult({
+        publishResult({
           status: 'error',
           text: [data.error, data.stderr].filter(Boolean).join('\n'),
         });
         return;
       }
       if (structureMode) {
-        if (data.accepted === true)
-          commit((s) => acceptAttempt(s, attemptId, code, 0, 'structure'));
-        setResult({
-          status: data.accepted === true ? 'accepted' : 'wrong',
-          text:
-            (data.stdout || '结构检查未通过') +
-            (data.accepted === true
-              ? '\n结构检查不验证张量数值与 shape，请根据独立默写情况评分。'
-              : ''),
-        });
+        publishResult(
+          {
+            status: data.accepted === true ? 'accepted' : 'wrong',
+            text:
+              (data.stdout || '结构检查未通过') +
+              (data.accepted === true
+                ? currentCompleted
+                  ? '\n本题已完成，本次重新提交不重复计数或更新 FSRS。'
+                  : '\n结构检查不验证张量数值与 shape，请根据独立默写情况评分。'
+                : ''),
+          },
+          data.accepted === true ? 0 : undefined,
+          'structure',
+        );
         return;
       }
       if (!allTests) {
@@ -429,13 +480,15 @@ export function MemoryMode({
         return;
       }
       if (data.accepted === true) {
-        commit((s) => acceptAttempt(s, attemptId, code, data.total));
-        setResult({
-          status: 'accepted',
-          text: `通过本站全部 ${data.total} 组测试。${storeRef.current?.session?.attempt?.hints.length ? '本题已查看提示，仍记为需要重学。' : '请按真实回忆情况选择评分。'}`,
-        });
+        publishResult(
+          {
+            status: 'accepted',
+            text: `通过本站全部 ${data.total} 组测试。${currentCompleted ? '本题已完成，本次重新提交不重复计数或更新 FSRS。' : storeRef.current?.session?.attempt?.hints.length ? '本题已查看提示，仍记为需要重学。' : '请按真实回忆情况选择评分。'}`,
+          },
+          data.total,
+        );
       } else
-        setResult({
+        publishResult({
           status: 'wrong',
           text: data.stdout || '测试未通过，请继续修改代码。',
         });
@@ -443,7 +496,7 @@ export function MemoryMode({
     worker.onerror = () => {
       if (id !== runRef.current) return;
       stopRun();
-      setResult({
+      publishResult({
         status: 'error',
         text: 'Python 环境加载失败，请检查网络后重试。',
       });
@@ -461,7 +514,7 @@ export function MemoryMode({
     timerRef.current = setTimeout(() => {
       if (id !== runRef.current) return;
       stopRun();
-      setResult({
+      publishResult({
         status: 'error',
         text: '运行超过 45 秒，已停止。首次加载较慢时可重试；也请检查死循环。',
       });
@@ -531,7 +584,15 @@ export function MemoryMode({
               className="mx-1 hidden h-5 w-px bg-border sm:block"
               aria-hidden="true"
             />
-            {(attempt || !!store.session?.skipped?.length) && (
+            {!!store.session?.queue.length && (
+              <SessionQuestionList
+                session={store.session}
+                problems={problems}
+                disabled={!ready}
+                onSelect={selectQuestion}
+              />
+            )}
+            {store.session && (
               <AddSessionQuestions
                 problems={problems}
                 eligibleIds={availableSessionProblems(store, problems).map(
@@ -548,7 +609,7 @@ export function MemoryMode({
                 onAdd={addQuestions}
               />
             )}
-            {active && (
+            {active && !currentCompleted && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -663,14 +724,14 @@ export function MemoryMode({
           <div className="grid items-center gap-8 md:grid-cols-[1.15fr_1fr] md:gap-12 lg:gap-16">
             <section className="rounded-[24px] bg-muted p-6 sm:p-8">
               <h3 className="text-[22px] font-semibold tracking-tight">
-                {attempt ? '继续未完成的这一轮' : '安排这一轮'}
+                {unfinished.length ? '继续未完成的这一轮' : '安排这一轮'}
               </h3>
-              {attempt ? (
+              {unfinished.length ? (
                 <>
                   <p className="my-4 text-sm leading-7 text-muted-foreground">
-                    已完成 {store.session!.index} /{' '}
-                    {store.session!.queue.length} 题，当前为{' '}
-                    {problem ? memoryLabel(problem) : ''} · {problem?.title}
+                    已完成 {completed.length} / {store.session!.queue.length}{' '}
+                    题，当前为 {problem ? memoryLabel(problem) : ''} ·{' '}
+                    {problem?.title}
                     。草稿、提示记录和已安排的复习时间都会保留。
                     {!!store.session?.skipped?.length &&
                       ` 本轮已跳过 ${store.session.skipped.length} 题，不计入完成数量。`}
@@ -679,8 +740,11 @@ export function MemoryMode({
                     className="h-11 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={!ready || (!structureMode && !tests)}
                     onClick={() => {
-                      setActive(true);
-                      setResult(idle);
+                      selectQuestion(
+                        attempt && !currentCompleted
+                          ? attempt.problemId
+                          : unfinished[0],
+                      );
                     }}
                   >
                     继续默写
@@ -1014,8 +1078,10 @@ export function MemoryMode({
             <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-5 py-3 lg:px-8">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium tabular-nums">
-                  第 {store.session!.index + 1} / {store.session!.queue.length}{' '}
-                  题
+                  已完成 {completed.length} / {store.session!.queue.length} 题
+                  <span className="ml-3 text-xs font-normal text-muted-foreground">
+                    当前第 {store.session!.queue.indexOf(problem.id) + 1} 题
+                  </span>
                   {!!store.session?.skipped?.length && (
                     <span className="ml-3 text-xs font-normal text-muted-foreground">
                       已跳过 {store.session.skipped.length} 题
@@ -1029,22 +1095,26 @@ export function MemoryMode({
                   <div
                     className="h-full rounded-full bg-primary"
                     style={{
-                      width: `${(store.session!.index / store.session!.queue.length) * 100}%`,
+                      width: `${(completed.length / store.session!.queue.length) * 100}%`,
                     }}
                   />
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {store.cards[problem.id] && !attempt.recorded
-                    ? '到期复习'
-                    : '完整默写'}
+                  {currentCompleted
+                    ? '已完成 · 可重新提交'
+                    : store.cards[problem.id] && !attempt.recorded
+                      ? '到期复习'
+                      : '完整默写'}
                 </span>
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs ${attempt.hints.length ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200' : 'text-muted-foreground'}`}
               >
-                {attempt.hints.length
-                  ? '已看提示 · 已记录需要重学'
-                  : '独立回忆中 · 输入模板不算提示'}
+                {currentCompleted
+                  ? '再次练习 · 不重复计数或评分'
+                  : attempt.hints.length
+                    ? '已看提示 · 已记录需要重学'
+                    : '独立回忆中 · 输入模板不算提示'}
               </span>
             </div>
           </div>
@@ -1116,7 +1186,9 @@ export function MemoryMode({
                     <Eye className="size-4" />
                     {showApproach ? '收起核心思路' : '查看核心思路'}
                   </span>
-                  <span className="text-xs font-normal">计为需要重学</span>
+                  <span className="text-xs font-normal">
+                    {currentCompleted ? '保留原评分' : '计为需要重学'}
+                  </span>
                 </Button>
                 {showApproach && (
                   <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm leading-7">
@@ -1144,7 +1216,9 @@ export function MemoryMode({
                     <Eye className="size-4" />
                     {showAnswer ? '收起参考答案' : '查看参考答案'}
                   </span>
-                  <span className="text-xs font-normal">计为需要重学</span>
+                  <span className="text-xs font-normal">
+                    {currentCompleted ? '保留原评分' : '计为需要重学'}
+                  </span>
                 </Button>
                 {showAnswer && (
                   <div className="overflow-hidden rounded-lg border bg-card">
@@ -1177,7 +1251,7 @@ export function MemoryMode({
                   </div>
                 )}
                 <p className="text-xs leading-6 text-muted-foreground">
-                  返回题库只暂停本轮，不记为提示；仅在记忆模式点击“查看核心思路”或“查看参考答案”时记录重学。已有提示记录不会因重置代码而清除。
+                  返回题库或切换题目不记为提示。未完成题点击“查看核心思路”或“查看参考答案”时记录重学；已完成题再次练习保留原评分。已有提示记录不会因重置代码而清除。
                 </p>
               </div>
             </article>
@@ -1295,9 +1369,23 @@ export function MemoryMode({
               <div className="border-t border-border bg-muted/25 p-5">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
                   <CheckCircle2 className="size-4 text-muted-foreground" />
-                  这次回忆得怎么样？
+                  {currentCompleted ? '本题已完成' : '这次回忆得怎么样？'}
                 </h3>
-                {attempt.recorded ? (
+                {currentCompleted ? (
+                  <>
+                    <p className="mb-4 text-xs leading-6 text-muted-foreground">
+                      可以继续编辑并重新提交。最新判题结果单独保存，即使未通过也不撤销原完成记录，不重复计数或更新
+                      FSRS。
+                    </p>
+                    <Button
+                      className="h-10 w-full rounded-full"
+                      onClick={() => finish(Rating.Again)}
+                    >
+                      {unfinished.length ? '继续未完成题目' : '返回本轮概览'}
+                      <ArrowRight className="size-4" />
+                    </Button>
+                  </>
+                ) : attempt.recorded ? (
                   <>
                     <p className="mb-4 text-xs leading-6 text-amber-800 dark:text-amber-200">
                       已按“需要重学”记录，下次复习：
