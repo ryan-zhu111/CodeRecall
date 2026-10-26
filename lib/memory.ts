@@ -23,6 +23,7 @@ export type MemoryProblem = {
   track: string;
   hot100?: boolean;
   codeTopRank?: number;
+  category?: string;
   title: string;
   statement: string[];
   approach: string;
@@ -205,7 +206,8 @@ export function availableSessionProblems(
   if (!session || (!session.attempt && !session.skipped?.length)) return [];
   const queued = new Set(session.queue);
   const skipped = new Set(session.skipped ?? []);
-  return sessionPool(store, problems).filter(
+  // Manual selection uses the complete catalog, including for saved old rounds.
+  return problems.filter(
     (p) => !queued.has(p.id) && (!store.cards[p.id] || skipped.has(p.id)),
   );
 }
@@ -228,7 +230,13 @@ export function addSessionProblems(
     session: {
       ...session,
       queue: [...session.queue, ...added],
-      pool: sessionPool(store, problems).map((p) => p.id),
+      // Keep the original automatic replacement pool and include explicit additions.
+      pool: [
+        ...new Set([
+          ...sessionPool(store, problems).map((p) => p.id),
+          ...added,
+        ]),
+      ],
       // Explicitly adding a skipped question cancels only its skip marker.
       skipped: (session.skipped ?? []).filter((id) => !added.includes(id)),
       attempt:

@@ -3,6 +3,11 @@ import { ListPlus, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { MemoryProblem } from '@/lib/memory';
+import {
+  scopeLabels,
+  problemsInScope,
+  type ProblemScope,
+} from '@/lib/problem-collections';
 
 export function AddSessionQuestions({
   problems,
@@ -23,6 +28,8 @@ export function AddSessionQuestions({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<ProblemScope>('all');
+  const [category, setCategory] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -43,8 +50,16 @@ export function AddSessionQuestions({
     p.track === 'multimodal'
       ? `MM ${p.trackSequence ?? p.id.replace('mm-', '')}`
       : `LC ${p.lc}`;
-  const visible = problems.filter((p) =>
-    `${p.id} ${label(p)} ${p.title}`.toLowerCase().includes(needle),
+  const scoped = problemsInScope(problems, scope);
+  const categories = [
+    ...new Set(
+      scoped.map((p) => p.category).filter((value): value is string => !!value),
+    ),
+  ];
+  const visible = scoped.filter(
+    (p) =>
+      (!category || p.category === category) &&
+      `${p.id} ${label(p)} ${p.title}`.toLowerCase().includes(needle),
   );
   function close() {
     dialogRef.current?.close();
@@ -59,6 +74,8 @@ export function AddSessionQuestions({
         disabled={disabled}
         onClick={() => {
           setQuery('');
+          setScope('all');
+          setCategory('');
           setPicked([]);
           setError('');
           setOpen(true);
@@ -92,7 +109,8 @@ export function AddSessionQuestions({
           id={descriptionId}
           className="my-4 text-sm leading-6 text-muted-foreground"
         >
-          列出本轮范围内的全部题目。绿色表示已在本轮或已学过，不能勾选；新题和标为“已跳过”的题仍可添加。按勾选顺序追加到队尾。重新加入已跳过的题会撤销跳过标记，从空白模板开始，原评分和草稿保留。
+          从全部 {problems.length}{' '}
+          题中选题，不受本轮题库范围限制。绿色表示已在本轮或已学过，不能勾选；新题和标为“已跳过”的题仍可添加。按勾选顺序追加到队尾，切换筛选保留已选题目。当前草稿和学习记录保留；重新加入已跳过的题从空白模板开始。
         </p>
         {resumeRound && (
           <p className="mb-4 rounded-lg bg-muted p-3 text-sm">
@@ -101,11 +119,48 @@ export function AddSessionQuestions({
         )}
         {open && (
           <>
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="space-y-2 text-sm">
+                <span>题库类型</span>
+                <select
+                  value={scope}
+                  onChange={(event) => {
+                    setScope(event.target.value as ProblemScope);
+                    setCategory('');
+                  }}
+                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  {Object.entries(scopeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label} ·{' '}
+                      {problemsInScope(problems, value as ProblemScope).length}{' '}
+                      题
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-2 text-sm">
+                <span>题目分类</span>
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  <option value="">全部分类 · {scoped.length} 题</option>
+                  {categories.map((value) => (
+                    <option key={value} value={value}>
+                      {value} ·{' '}
+                      {scoped.filter((p) => p.category === value).length} 题
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <div className="relative mb-4">
               <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
               <Input
                 ref={searchRef}
-                aria-label="搜索本轮题库中的题目"
+                aria-label="搜索全部题库中的题目"
                 placeholder="搜索题号或题名"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -159,8 +214,8 @@ export function AddSessionQuestions({
               {!visible.length && (
                 <p className="p-6 text-center text-sm leading-6 text-muted-foreground">
                   {problems.length
-                    ? '没有找到匹配的题目，试试其他题号或题名。'
-                    : '本轮题库没有题目。'}
+                    ? '没有找到匹配的题目，试试其他分类、题号或题名。'
+                    : '题库没有题目。'}
                 </p>
               )}
             </div>
@@ -174,8 +229,12 @@ export function AddSessionQuestions({
                 aria-live="polite"
                 className="text-sm text-muted-foreground"
               >
-                已选 {selected.length} 题 · {eligible.size} 题可添加 / 共{' '}
+                已选 {selected.length} 题 · 当前显示 {visible.length} / 全部{' '}
                 {problems.length} 题
+                <span className="mt-1 block text-xs">
+                  当前筛选可添加{' '}
+                  {visible.filter((p) => eligible.has(p.id)).length} 题
+                </span>
               </span>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={close}>

@@ -47,7 +47,6 @@ import {
   revealHint,
   startSession,
   skipAttempt,
-  sessionPool,
   type Grade,
   type MemoryProblem,
   type MemoryStore,
@@ -533,7 +532,7 @@ export function MemoryMode({
             />
             {(attempt || !!store.session?.skipped?.length) && (
               <AddSessionQuestions
-                problems={sessionPool(store, problems)}
+                problems={problems}
                 eligibleIds={availableSessionProblems(store, problems).map(
                   (p) => p.id,
                 )}
